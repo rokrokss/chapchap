@@ -33,3 +33,5 @@ plugins.jsonl
 
 # mise
 mise.toml
+
+pgdata
