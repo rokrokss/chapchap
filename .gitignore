@@ -12,6 +12,11 @@ api/.idea
 api/.env
 api/storage/*
 
+scraper/.idea
+
+scraper/.env
+scraper/storage/*
+
 .vscode/*
 !.vscode/launch.json
 pyrightconfig.json
