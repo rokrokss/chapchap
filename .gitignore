@@ -1,0 +1,30 @@
+.DS_Store
+web/.vscode/settings.json
+
+# Intellij IDEA Files
+.idea/*
+!.idea/vcs.xml
+!.idea/icon.png
+.ideaDataSources/
+*.iml
+api/.idea
+
+api/.env
+api/storage/*
+
+.vscode/*
+!.vscode/launch.json
+pyrightconfig.json
+api/.vscode
+
+.idea/
+.vscode
+
+# pnpm
+/.pnpm-store
+
+# plugin migrate
+plugins.jsonl
+
+# mise
+mise.toml
