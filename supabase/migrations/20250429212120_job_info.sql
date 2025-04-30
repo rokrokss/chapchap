@@ -3,8 +3,10 @@ CREATE SCHEMA IF NOT EXISTS chapssal;
 -- Create job_info table
 CREATE TABLE chapssal.job_info (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    job_title TEXT NOT NULL,
     company_name TEXT NOT NULL,
-    link TEXT NOT NULL,
+    affiliate_company_name TEXT NOT NULL,
+    link TEXT NOT NULL UNIQUE,
     team_info TEXT NOT NULL,
     responsibilities TEXT NOT NULL,
     qualifications TEXT NOT NULL,
@@ -18,8 +20,12 @@ CREATE TABLE chapssal.job_info (
 );
 
 -- Create index for faster searches
+CREATE INDEX idx_job_info_job_title ON chapssal.job_info(job_title);
 CREATE INDEX idx_job_info_company_name ON chapssal.job_info(company_name);
+CREATE INDEX idx_job_info_job_title_company_name ON chapssal.job_info(job_title, company_name);
+CREATE INDEX idx_job_info_uploaded_date ON chapssal.job_info(uploaded_date);
 CREATE INDEX idx_job_info_is_active ON chapssal.job_info(is_active);
+CREATE INDEX idx_job_info_link ON chapssal.job_info(link);
 
 -- Add RLS policies
 ALTER TABLE chapssal.job_info ENABLE ROW LEVEL SECURITY;

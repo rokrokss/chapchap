@@ -15,10 +15,10 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 
 # --- 상수 ---
-LINE_JOBS_URL = "https://careers.linecorp.com/ko/jobs?ca=Engineering&ci=Gwacheon,Bundang&co=East%20Asia"
+JOB_API_BASE_URL = "https://recruit.navercorp.com/rcrt/loadJobList.do"
 DEFAULT_HEADERS = {
     "User-Agent": "Mozilla/5.0",
-    "Referer": "https://careers.linecorp.com/",
+    "Referer": "https://recruit.navercorp.com/",
     "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
 }
 
@@ -70,37 +70,54 @@ def get_env_vars(*var_names: str) -> Union[str, tuple]:
 
 
 # --- 스크래핑 관련 함수 ---
-def scrape_line_jobs(session: requests.Session) -> List[Dict[str, str]]:
-    """LINE 채용 공고 리스트를 스크래핑합니다."""
-    res = session.get(LINE_JOBS_URL, headers=DEFAULT_HEADERS)
-    res.encoding = "utf-8"  # 응답 인코딩을 UTF-8로 설정
-    soup = BeautifulSoup(res.text, "html.parser", from_encoding="utf-8")
+def scrape_jobs(session: requests.Session) -> List[Dict[str, str]]:
+    first_index = 0
+    page_size = 10
+    params = {
+        "annoId": "",
+        "sw": "",
+        "subJobCdArr": "1010001,1010002,1010003,1010004,1010005,1010006,1010007,1010008,1010009,1010020,1020001,1030001,1030002,1040001,1040002,1040003,1050001,1050002,1060001",
+        "sysCompanyCdArr": "",
+        "empTypeCdArr": "",
+        "entTypeCdArr": "",
+        "workAreaCdArr": "",
+    }
     jobs = []
+    while True:
+        params["firstIndex"] = first_index
+        res = session.get(JOB_API_BASE_URL, params=params)
+        data = res.json()
 
-    for li in soup.select("ul.job_list li"):
-        a_tag = li.find("a", href=True)
-        h3_tag = li.find("h3", class_="title")
-        date_span = li.find("span", class_="date")
-        text_filter = li.find("div", class_="text_filter")
+        scraped_jobs = data.get("list", [])
+        if not scraped_jobs:
+            break  # 더 이상 없으면 종료
 
-        if not (a_tag and h3_tag and text_filter):
-            continue
+        for job in scraped_jobs:
+            job_id = job["annoId"] if "annoId" in job else job["id"]
+            title = job["annoSubject"] if "annoSubject" in job else job["title"]
+            start_date = (
+                job["staYmdTime"].split()[0]
+                if "staYmdTime" in job
+                else datetime.now().strftime("%Y.%m.%d")
+            )
+            url = f"https://recruit.navercorp.com/rcrt/view.do?annoId={job_id}&lang=ko"
+            affiliate_company_name = (
+                title[1 : title.find("]")].strip() if "]" in title else "네이버"
+            )
+            title = title.split("]")[1].strip() if "]" in title else title
+            if affiliate_company_name == "NAVER":
+                affiliate_company_name = "네이버"
+            jobs.append(
+                {
+                    "id": job_id,
+                    "title": title,
+                    "affiliate_company_name": affiliate_company_name,
+                    "link": url,
+                    "uploaded_date": start_date,
+                }
+            )
 
-        description_text = text_filter.get_text(strip=True)
-
-        if "Taipei" in description_text or "Engineering" not in description_text:
-            continue
-
-        job_link = a_tag["href"]
-        job_title = h3_tag.find(text=True, recursive=False).strip()
-        uploaded_date = date_span.get_text(strip=True)[:10]
-        jobs.append(
-            {
-                "title": job_title,
-                "link": f"https://careers.linecorp.com{job_link}",
-                "uploaded_date": uploaded_date,
-            }
-        )
+        first_index += page_size
 
     return jobs
 
@@ -109,9 +126,16 @@ def scrape_job_detail(session: requests.Session, url: str) -> str:
     """상세 채용 공고 내용을 스크래핑합니다."""
     res = session.get(url, headers={"User-Agent": "Mozilla/5.0"})
     soup = BeautifulSoup(res.content, "html.parser")
-    section = soup.find("section", id="jobs-contents")
+    # 디버깅을 위해 HTML 저장
+    with open("naver_job_detail.html", "w", encoding="utf-8") as f:
+        f.write(str(soup))
 
-    return section.get_text(separator="\n", strip=True) if section else "상세 내용 없음"
+    detail_wrap = soup.find("div", class_="detail_wrap")
+    return (
+        detail_wrap.get_text(separator="\n", strip=True)
+        if detail_wrap
+        else "상세 내용 없음"
+    )
 
 
 # --- Gemini 추출 함수 ---
@@ -191,9 +215,9 @@ def main():
     )
     test_mode = test_mode == "1"
     session = requests.Session()
-    company_name = "라인플러스"
+    company_name = "네이버"
 
-    jobs = scrape_line_jobs(session)
+    jobs = scrape_jobs(session)
     logging.info(f"총 {len(jobs)}건 추출했습니다.")
 
     for idx, job in enumerate(jobs, 1):
@@ -207,10 +231,10 @@ def main():
         )
         job_info = JobInfo(
             company_name=company_name,
-            affiliate_company_name=company_name,
+            affiliate_company_name=job["affiliate_company_name"],
             link=job["link"],
             job_title=job["title"],
-            uploaded_date=datetime.strptime(job["uploaded_date"], "%Y-%m-%d").date(),
+            uploaded_date=datetime.strptime(job["uploaded_date"], "%Y.%m.%d").date(),
             **job_info_response.model_dump(),
         )
 
@@ -232,7 +256,7 @@ def main():
                             """
                             UPDATE job_info SET
                                 company_name             = %s,
-                                job_title               = %s, 
+                                job_title               = %s,
                                 affiliate_company_name   = %s,
                                 team_info               = %s,
                                 responsibilities        = %s,
