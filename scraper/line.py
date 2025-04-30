@@ -12,7 +12,7 @@ import psycopg
 
 # --- 기본 설정 ---
 load_dotenv()
-logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
+logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 
 # --- 상수 ---
 LINE_JOBS_URL = "https://careers.linecorp.com/ko/jobs?ca=Engineering&ci=Gwacheon,Bundang&co=East%20Asia"
@@ -24,13 +24,14 @@ DEFAULT_HEADERS = {
 
 # --- 데이터베이스 설정 ---
 DB_CONFIG = {
-    'dbname': os.getenv('DB_NAME', 'postgres'),
-    'user': os.getenv('DB_USER', 'postgres'),
-    'password': os.getenv('DB_PASSWORD', 'postgres'),
-    'host': os.getenv('DB_HOST', 'localhost'),
-    'port': os.getenv('DB_PORT', '54322'),
-    'options': f'-c search_path={os.getenv('DB_SCHEMA', 'chapssal')}',
+    "dbname": os.getenv("DB_NAME", "postgres"),
+    "user": os.getenv("DB_USER", "postgres"),
+    "password": os.getenv("DB_PASSWORD", "postgres"),
+    "host": os.getenv("DB_HOST", "localhost"),
+    "port": os.getenv("DB_PORT", "54322"),
+    "options": f"-c search_path={os.getenv('DB_SCHEMA', 'chapssal')}",
 }
+
 
 # --- 데이터 모델 ---
 class JobInfo(BaseModel):
@@ -44,6 +45,7 @@ class JobInfo(BaseModel):
     additional_info: str
     uploaded_date: date
 
+
 class JobInfoResponse(BaseModel):
     team_info: str
     responsibilities: str
@@ -51,6 +53,7 @@ class JobInfoResponse(BaseModel):
     preferred_qualifications: str
     hiring_process: List[str]
     additional_info: str
+
 
 # --- 유틸 함수 ---
 def get_env_vars(*var_names: str) -> Union[str, tuple]:
@@ -63,6 +66,7 @@ def get_env_vars(*var_names: str) -> Union[str, tuple]:
         values.append(value)
     return tuple(values) if len(values) > 1 else values[0]
 
+
 # --- 스크래핑 관련 함수 ---
 def scrape_line_jobs(session: requests.Session) -> List[Dict[str, str]]:
     """LINE 채용 공고 리스트를 스크래핑합니다."""
@@ -70,11 +74,11 @@ def scrape_line_jobs(session: requests.Session) -> List[Dict[str, str]]:
     soup = BeautifulSoup(res.text, "html.parser")
     jobs = []
 
-    for li in soup.select('ul.job_list li'):
-        a_tag = li.find('a', href=True)
-        h3_tag = li.find('h3', class_='title')
-        date_span = li.find('span', class_='date')
-        text_filter = li.find('div', class_='text_filter')
+    for li in soup.select("ul.job_list li"):
+        a_tag = li.find("a", href=True)
+        h3_tag = li.find("h3", class_="title")
+        date_span = li.find("span", class_="date")
+        text_filter = li.find("div", class_="text_filter")
 
         if not (a_tag and h3_tag and text_filter):
             continue
@@ -84,31 +88,32 @@ def scrape_line_jobs(session: requests.Session) -> List[Dict[str, str]]:
         if "Taipei" in description_text or "Engineering" not in description_text:
             continue
 
-        job_link = a_tag['href']
+        job_link = a_tag["href"]
         job_title = h3_tag.get_text(strip=True)
         uploaded_date = date_span.get_text(strip=True)[:10]
-        jobs.append({
-            "title": job_title,
-            "link": f"https://careers.linecorp.com{job_link}",
-            "uploaded_date": uploaded_date
-        })
+        jobs.append(
+            {
+                "title": job_title,
+                "link": f"https://careers.linecorp.com{job_link}",
+                "uploaded_date": uploaded_date,
+            }
+        )
 
     return jobs
+
 
 def scrape_job_detail(session: requests.Session, url: str) -> str:
     """상세 채용 공고 내용을 스크래핑합니다."""
     res = session.get(url, headers={"User-Agent": "Mozilla/5.0"})
     soup = BeautifulSoup(res.content, "html.parser")
-    section = soup.find('section', id='jobs-contents')
+    section = soup.find("section", id="jobs-contents")
 
     return section.get_text(separator="\n", strip=True) if section else "상세 내용 없음"
 
+
 # --- Gemini 추출 함수 ---
 def extract_structured_data_with_gemini(
-    company_name: str,
-    job_content_text: str,
-    api_key: str,
-    model_type: str
+    company_name: str, job_content_text: str, api_key: str, model_type: str
 ) -> Optional[JobInfoResponse]:
     """Gemini API를 사용하여 구조화된 데이터를 추출합니다."""
     try:
@@ -164,7 +169,7 @@ def extract_structured_data_with_gemini(
             model=model_type,
             contents=prompt,
             config=types.GenerateContentConfig(
-                response_mime_type='application/json',
+                response_mime_type="application/json",
                 temperature=0.2,
                 response_schema=JobInfoResponse,
             ),
@@ -175,11 +180,14 @@ def extract_structured_data_with_gemini(
         logging.error(f"Gemini 호출 실패: {e}")
         return None
 
+
 # --- 메인 실행 ---
 def main():
-    api_key, model_type = get_env_vars("GEMINI_APIKEY", "GEMINI_SYNTHETIC_DATA_GENERATION_MODEL")
+    api_key, model_type = get_env_vars(
+        "GEMINI_APIKEY", "GEMINI_SYNTHETIC_DATA_GENERATION_MODEL"
+    )
     session = requests.Session()
-    company_name = '라인플러스'
+    company_name = "라인플러스"
 
     jobs = scrape_line_jobs(session)
     logging.info(f"총 {len(jobs)}건 추출했습니다.")
@@ -188,15 +196,17 @@ def main():
 
     for job in jobs:
         logging.info(f"공고: {job['title']} - {job['link']}")
-        detail_text = scrape_job_detail(session, job['link'])
+        detail_text = scrape_job_detail(session, job["link"])
 
         logging.info("Gemini를 통해 구조화된 데이터 추출 중...")
-        job_info_response = extract_structured_data_with_gemini(company_name, detail_text, api_key, model_type)
+        job_info_response = extract_structured_data_with_gemini(
+            company_name, detail_text, api_key, model_type
+        )
         job_info = JobInfo(
             company_name=company_name,
-            link=job['link'],
-            uploaded_date=datetime.strptime(job['uploaded_date'], "%Y-%m-%d").date(),
-            **job_info_response.model_dump()
+            link=job["link"],
+            uploaded_date=datetime.strptime(job["uploaded_date"], "%Y-%m-%d").date(),
+            **job_info_response.model_dump(),
         )
 
         if job_info:
@@ -204,13 +214,27 @@ def main():
 
             with psycopg.connect(**DB_CONFIG) as conn:
                 with conn.cursor() as cur:
-                    cur.execute("INSERT INTO job_info (company_name, link, team_info, responsibilities, qualifications, preferred_qualifications, hiring_process, additional_info, uploaded_date) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)", (job_info.company_name, job_info.link, job_info.team_info, job_info.responsibilities, job_info.qualifications, job_info.preferred_qualifications, job_info.hiring_process, job_info.additional_info, job_info.uploaded_date))
+                    cur.execute(
+                        "INSERT INTO job_info (company_name, link, team_info, responsibilities, qualifications, preferred_qualifications, hiring_process, additional_info, uploaded_date) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                        (
+                            job_info.company_name,
+                            job_info.link,
+                            job_info.team_info,
+                            job_info.responsibilities,
+                            job_info.qualifications,
+                            job_info.preferred_qualifications,
+                            job_info.hiring_process,
+                            job_info.additional_info,
+                            job_info.uploaded_date,
+                        ),
+                    )
                     conn.commit()
         else:
             logging.error("구조화 실패")
 
         if TEST_MODE:
             break
+
 
 if __name__ == "__main__":
     main()
