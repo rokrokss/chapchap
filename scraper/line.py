@@ -1,5 +1,4 @@
 import os
-import json
 import logging
 import requests
 from bs4 import BeautifulSoup
@@ -8,6 +7,8 @@ from typing import List, Dict, Optional, Union
 from pydantic import BaseModel
 from google import genai
 from google.genai import types
+from datetime import datetime, date
+import psycopg
 
 # --- 기본 설정 ---
 load_dotenv()
@@ -21,19 +22,30 @@ DEFAULT_HEADERS = {
     "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
 }
 
+# --- 데이터베이스 설정 ---
+DB_CONFIG = {
+    'dbname': os.getenv('DB_NAME', 'postgres'),
+    'user': os.getenv('DB_USER', 'postgres'),
+    'password': os.getenv('DB_PASSWORD', 'postgres'),
+    'host': os.getenv('DB_HOST', 'localhost'),
+    'port': os.getenv('DB_PORT', '54322'),
+    'options': f'-c search_path={os.getenv('DB_SCHEMA', 'chapssal')}',
+}
+
 # --- 데이터 모델 ---
 class JobInfo(BaseModel):
     company_name: str
     link: str
-    team_intro: str
+    team_info: str
     responsibilities: str
     qualifications: str
     preferred_qualifications: str
     hiring_process: List[str]
     additional_info: str
+    uploaded_date: date
 
 class JobInfoResponse(BaseModel):
-    team_intro: str
+    team_info: str
     responsibilities: str
     qualifications: str
     preferred_qualifications: str
@@ -61,6 +73,7 @@ def scrape_line_jobs(session: requests.Session) -> List[Dict[str, str]]:
     for li in soup.select('ul.job_list li'):
         a_tag = li.find('a', href=True)
         h3_tag = li.find('h3', class_='title')
+        date_span = li.find('span', class_='date')
         text_filter = li.find('div', class_='text_filter')
 
         if not (a_tag and h3_tag and text_filter):
@@ -73,9 +86,11 @@ def scrape_line_jobs(session: requests.Session) -> List[Dict[str, str]]:
 
         job_link = a_tag['href']
         job_title = h3_tag.get_text(strip=True)
+        uploaded_date = date_span.get_text(strip=True)[:10]
         jobs.append({
             "title": job_title,
-            "link": f"https://careers.linecorp.com{job_link}"
+            "link": f"https://careers.linecorp.com{job_link}",
+            "uploaded_date": uploaded_date
         })
 
     return jobs
@@ -122,7 +137,7 @@ def extract_structured_data_with_gemini(
 
 1. 원본 텍스트에서 다음 항목들에 해당하는 핵심 정보를 정확하게 추출합니다:
 
-"팀 소개" (key: team_intro)
+"팀 소개" (key: team_info)
 "담당업무" (key: responsibilities)
 "지원자격" (key: qualifications)
 "우대사항" (key: preferred_qualifications)
@@ -180,11 +195,17 @@ def main():
         job_info = JobInfo(
             company_name=company_name,
             link=job['link'],
+            uploaded_date=datetime.strptime(job['uploaded_date'], "%Y-%m-%d").date(),
             **job_info_response.model_dump()
         )
 
         if job_info:
             print(job_info.model_dump_json(indent=2))
+
+            with psycopg.connect(**DB_CONFIG) as conn:
+                with conn.cursor() as cur:
+                    cur.execute("INSERT INTO job_info (company_name, link, team_info, responsibilities, qualifications, preferred_qualifications, hiring_process, additional_info, uploaded_date) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)", (job_info.company_name, job_info.link, job_info.team_info, job_info.responsibilities, job_info.qualifications, job_info.preferred_qualifications, job_info.hiring_process, job_info.additional_info, job_info.uploaded_date))
+                    conn.commit()
         else:
             logging.error("구조화 실패")
 
