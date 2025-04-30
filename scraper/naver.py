@@ -105,8 +105,13 @@ def scrape_jobs(session: requests.Session) -> List[Dict[str, str]]:
                 title[1 : title.find("]")].strip() if "]" in title else "네이버"
             )
             title = title.split("]")[1].strip() if "]" in title else title
-            if affiliate_company_name == "NAVER":
+            if affiliate_company_name.lower() == "naver":
                 affiliate_company_name = "네이버"
+            elif affiliate_company_name.lower() == "naver cloud":
+                affiliate_company_name = "네이버클라우드"
+            elif affiliate_company_name.lower() == "naver labs":
+                affiliate_company_name = "네이버랩스"
+
             jobs.append(
                 {
                     "id": job_id,
@@ -126,9 +131,6 @@ def scrape_job_detail(session: requests.Session, url: str) -> str:
     """상세 채용 공고 내용을 스크래핑합니다."""
     res = session.get(url, headers={"User-Agent": "Mozilla/5.0"})
     soup = BeautifulSoup(res.content, "html.parser")
-    # 디버깅을 위해 HTML 저장
-    with open("naver_job_detail.html", "w", encoding="utf-8") as f:
-        f.write(str(soup))
 
     detail_wrap = soup.find("div", class_="detail_wrap")
     return (
@@ -265,8 +267,7 @@ def main():
                                 hiring_process          = %s,
                                 additional_info         = %s,
                                 uploaded_date           = %s,
-                                updated_at              = NOW(),
-                                is_active               = true
+                                updated_at              = NOW()
                             WHERE link = %s
                             """,
                             (

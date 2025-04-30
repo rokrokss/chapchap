@@ -13,13 +13,14 @@ import psycopg
 # --- 기본 설정 ---
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
-
+# https://www.coupang.jobs/kr/jobs/?page=2&search=engineer&location=Seoul,%20South%20Korea&pagesize=100#results
 # --- 상수 ---
-JOBS_BASE_URL = "https://careers.linecorp.com/ko/jobs?ca=Engineering&ci=Gwacheon,Bundang&co=East%20Asia"
+JOB_BASE_URL = "https://www.coupang.jobs/kr/jobs"
 DEFAULT_HEADERS = {
-    "User-Agent": "Mozilla/5.0",
-    "Referer": "https://careers.linecorp.com/",
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+    "Referer": "https://www.coupang.jobs/",
     "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
 }
 
 # --- 데이터베이스 설정 ---
@@ -71,47 +72,89 @@ def get_env_vars(*var_names: str) -> Union[str, tuple]:
 
 # --- 스크래핑 관련 함수 ---
 def scrape_jobs(session: requests.Session) -> List[Dict[str, str]]:
-    """LINE 채용 공고 리스트를 스크래핑합니다."""
-    res = session.get(JOBS_BASE_URL, headers=DEFAULT_HEADERS)
-    res.encoding = "utf-8"  # 응답 인코딩을 UTF-8로 설정
-    soup = BeautifulSoup(res.text, "html.parser", from_encoding="utf-8")
     jobs = []
-
-    for li in soup.select("ul.job_list li"):
-        a_tag = li.find("a", href=True)
-        h3_tag = li.find("h3", class_="title")
-        date_span = li.find("span", class_="date")
-        text_filter = li.find("div", class_="text_filter")
-
-        if not (a_tag and h3_tag and text_filter):
-            continue
-
-        description_text = text_filter.get_text(strip=True)
-
-        if "Taipei" in description_text or "Engineering" not in description_text:
-            continue
-
-        job_link = a_tag["href"]
-        job_title = h3_tag.find(text=True, recursive=False).strip()
-        uploaded_date = date_span.get_text(strip=True)[:10]
-        jobs.append(
-            {
-                "title": job_title,
-                "link": f"https://careers.linecorp.com{job_link}",
-                "uploaded_date": uploaded_date,
+    for search in ["engineer", "developer", "scientist", "research"]:
+        page = 1
+        while True:
+            params = {
+                "page": page,
+                "location": "Seoul, South Korea",
+                "pagesize": 100,
+                "search": search,
             }
-        )
+            target_url = f"{JOB_BASE_URL}/"
+            print(f"Requesting URL: {target_url} with params: {params}")
+            res = session.get(target_url, params=params, headers=DEFAULT_HEADERS)
+            res.encoding = "utf-8"
+            soup = BeautifulSoup(res.text, "html.parser")
+            job_container = soup.find("div", id="js-job-search-results")
+            job_cards = job_container.select("div.card.card-job")
+
+            if not job_cards:
+                break
+
+            for card in job_cards:
+                a_tag = card.select_one("h2.card-title > a")
+                if a_tag:
+                    title = a_tag.get_text(strip=True)
+                    affiliate_company_name = (
+                        title[1 : title.find("]")].strip() if "]" in title else "쿠팡"
+                    )
+                    title = title.split("]")[1].strip() if "]" in title else title
+                    link = "https://www.coupang.jobs" + a_tag["href"]
+                    if affiliate_company_name.lower() == "coupang":
+                        affiliate_company_name = "쿠팡"
+                    elif affiliate_company_name.lower() == "coupang pay":
+                        affiliate_company_name = "쿠팡페이"
+                    elif affiliate_company_name.lower() == "search & discovery":
+                        affiliate_company_name = "쿠팡"
+                    elif (
+                        affiliate_company_name.lower() == "coupang fulfillment services"
+                    ):
+                        affiliate_company_name = "쿠팡풀필먼스서비스"
+
+                    if (
+                        (
+                            "Engineer" in title
+                            or "Developer" in title
+                            or "Scientist" in title
+                            or "Research" in title
+                            or "Director" in title
+                            or "Architect" in title
+                        )
+                        and not "UX Research" in title
+                        and not "Product Management" in title
+                        and not "Product Design" in title
+                        and not "Marketing" in title
+                    ):
+                        jobs.append(
+                            {
+                                "title": title,
+                                "affiliate_company_name": affiliate_company_name,
+                                "link": link,
+                            }
+                        )
+
+            page += 1
 
     return jobs
 
 
 def scrape_job_detail(session: requests.Session, url: str) -> str:
     """상세 채용 공고 내용을 스크래핑합니다."""
-    res = session.get(url, headers={"User-Agent": "Mozilla/5.0"})
+    res = session.get(url, headers=DEFAULT_HEADERS)
     soup = BeautifulSoup(res.content, "html.parser")
-    section = soup.find("section", id="jobs-contents")
 
-    return section.get_text(separator="\n", strip=True) if section else "상세 내용 없음"
+    content_elem = soup.select_one("article.cms-content")
+
+    detail = content_elem.get_text(separator="\n", strip=True) if content_elem else None
+
+    time_elem = soup.select_one("div.job-table time")
+    updated_date = (
+        time_elem["datetime"] if time_elem and time_elem.has_attr("datetime") else None
+    )
+
+    return {"detail": detail, "updated_date": updated_date}
 
 
 # --- Gemini 추출 함수 ---
@@ -191,7 +234,7 @@ def main():
     )
     test_mode = test_mode == "1"
     session = requests.Session()
-    company_name = "라인플러스"
+    company_name = "쿠팡"
 
     jobs = scrape_jobs(session)
     logging.info(f"총 {len(jobs)}건 추출했습니다.")
@@ -199,18 +242,20 @@ def main():
     for idx, job in enumerate(jobs, 1):
         logging.info(f"공고 처리 중... ({idx}/{len(jobs)})")
         logging.info(f"공고: {job['title']} - {job['link']}")
-        detail_text = scrape_job_detail(session, job["link"])
+        job_detail = scrape_job_detail(session, job["link"])
 
         logging.info("Gemini를 통해 구조화된 데이터 추출 중...")
         job_info_response = extract_structured_data_with_gemini(
-            company_name, detail_text, api_key, model_type
+            company_name, job_detail["detail"], api_key, model_type
         )
         job_info = JobInfo(
             company_name=company_name,
-            affiliate_company_name=company_name,
+            affiliate_company_name=job["affiliate_company_name"],
             link=job["link"],
             job_title=job["title"],
-            uploaded_date=datetime.strptime(job["uploaded_date"], "%Y-%m-%d").date(),
+            uploaded_date=datetime.strptime(
+                job_detail["updated_date"], "%Y-%m-%d"
+            ).date(),
             **job_info_response.model_dump(),
         )
 
@@ -232,7 +277,7 @@ def main():
                             """
                             UPDATE job_info SET
                                 company_name             = %s,
-                                job_title               = %s, 
+                                job_title               = %s,
                                 affiliate_company_name   = %s,
                                 team_info               = %s,
                                 responsibilities        = %s,
@@ -241,7 +286,8 @@ def main():
                                 hiring_process          = %s,
                                 additional_info         = %s,
                                 uploaded_date           = %s,
-                                updated_at              = NOW()
+                                updated_at              = NOW(),
+                                is_active               = true
                             WHERE link = %s
                             """,
                             (
