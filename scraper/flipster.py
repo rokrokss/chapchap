@@ -1,7 +1,6 @@
 import os
 import logging
 import requests
-import json
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from typing import List, Dict, Optional, Union
@@ -16,12 +15,11 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 
 # --- 상수 ---
-JOB_BASE_URL = "https://about.daangn.com"
+JOB_BASE_URL = "https://careers.flipster.io"
 DEFAULT_HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-    "Referer": "https://about.daangn.com/",
+    "User-Agent": "Mozilla/5.0",
+    "Referer": "https://career.flipster.io/",
     "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
 }
 
 # --- 데이터베이스 설정 ---
@@ -73,33 +71,20 @@ def get_env_vars(*var_names: str) -> Union[str, tuple]:
 
 # --- 스크래핑 관련 함수 ---
 def scrape_jobs(session: requests.Session) -> List[Dict[str, str]]:
-    """채용 공고 리스트를 스크래핑합니다."""
-    params = {"q": "Engineer"}
-    target_url = f"{JOB_BASE_URL}/jobs/"
-    res = session.get(target_url, params=params, headers=DEFAULT_HEADERS)
-    res.encoding = "utf-8"  # 응답 인코딩을 UTF-8로 설정
-    soup = BeautifulSoup(res.text, "html.parser")
     jobs = []
+    res = session.get(f"{JOB_BASE_URL}/api/postings", headers=DEFAULT_HEADERS)
+    data = res.json()
 
-    for li in soup.select("ul.c-jpGEAj li.c-deAcZv"):
-        a_tag = li.find("a", href=True)
-        if not a_tag:
-            continue
+    scraped_jobs = data.get("jobs", [])
 
-        job_title = a_tag.find("h3", class_="c-boyXyq").get_text(strip=True)
-        job_link = a_tag["href"]
-        if (
-            "engineer" not in job_title.lower()
-            and "developer" not in job_title.lower()
-            and "scientist" not in job_title.lower()
-        ):
+    for job in scraped_jobs:
+        job_id = job["id"]
+        title = job["title"]
+        if job["team"]["value"] != "engineering":
             continue
-        jobs.append(
-            {
-                "title": job_title,
-                "link": f"https://about.daangn.com{job_link}",
-            }
-        )
+        url = f"{JOB_BASE_URL}/jobs/{job_id}"
+
+        jobs.append({"id": job_id, "title": title, "link": url})
 
     return jobs
 
@@ -109,19 +94,11 @@ def scrape_job_detail(session: requests.Session, url: str) -> str:
     res = session.get(url, headers=DEFAULT_HEADERS)
     soup = BeautifulSoup(res.content, "html.parser")
 
-    content_elem = soup.select_one("article.c-kJtTwH")
+    content_elem = soup.select_one("div.styles_lever_content__ql2gg")
 
     detail = content_elem.get_text(separator="\n", strip=True) if content_elem else None
 
-    json_ld_tags = soup.find_all("script", type="application/ld+json")
-    uploaded_date = None
-    for tag in json_ld_tags:
-        data = json.loads(tag.string)
-        date_posted = data.get("datePosted", None)
-        if date_posted:
-            uploaded_date = date_posted
-
-    return detail, uploaded_date
+    return detail
 
 
 # --- Gemini 추출 함수 ---
@@ -201,7 +178,7 @@ def main():
     )
     test_mode = test_mode == "1"
     session = requests.Session()
-    company_name = "당근"
+    company_name = "플립스터"
 
     jobs = scrape_jobs(session)
     logging.info(f"총 {len(jobs)}건 추출했습니다.")
@@ -209,7 +186,7 @@ def main():
     for idx, job in enumerate(jobs, 1):
         logging.info(f"공고 처리 중... ({idx}/{len(jobs)})")
         logging.info(f"공고: {job['title']} - {job['link']}")
-        detail_text, uploaded_date = scrape_job_detail(session, job["link"])
+        detail_text = scrape_job_detail(session, job["link"])
 
         logging.info("Gemini를 통해 구조화된 데이터 추출 중...")
         job_info_response = extract_structured_data_with_gemini(
@@ -220,7 +197,7 @@ def main():
             affiliate_company_name=company_name,
             link=job["link"],
             job_title=job["title"],
-            uploaded_date=datetime.strptime(uploaded_date, "%Y-%m-%d").date(),
+            uploaded_date=datetime.now().date(),
             **job_info_response.model_dump(),
         )
 
