@@ -2,9 +2,47 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="/pray.svg" />
+    <link rel="apple-touch-icon" href="/pray.svg" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#ffffff" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React + TS</title>
+    <title>찹쌀ai</title>
+    <style>
+      @media (prefers-color-scheme: light) {
+        :root {
+          --favicon-emoji: '🙏';
+        }
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --favicon-emoji: '🙏';
+        }
+      }
+    </style>
+    <script>
+      // Dynamic favicon for iOS
+      if (navigator.userAgent.match(/(iPad|iPhone|iPod)/g)) {
+        const link = document.querySelector('link[rel="icon"]');
+        const canvas = document.createElement('canvas');
+        canvas.width = 192;
+        canvas.height = 192;
+        const ctx = canvas.getContext('2d');
+        ctx.font = '150px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const emoji = getComputedStyle(document.documentElement).getPropertyValue('--favicon-emoji').trim().replace(/['"]/g, '');
+        ctx.fillText(emoji, canvas.width/2, canvas.height/2);
+        link.href = canvas.toDataURL();
+        
+        // Also update apple-touch-icon
+        const appleLink = document.querySelector('link[rel="apple-touch-icon"]');
+        if (appleLink) {
+          appleLink.href = canvas.toDataURL();
+        }
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
