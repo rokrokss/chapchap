@@ -1,6 +1,7 @@
 import os
 import logging
 import requests
+import json
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from typing import List, Dict, Optional, Union
@@ -15,11 +16,12 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 
 # --- 상수 ---
-JOBS_BASE_URL = "https://careers.linecorp.com/ko/jobs?ca=Engineering&ci=Gwacheon,Bundang&co=East%20Asia"
+JOB_BASE_URL = "https://about.daangn.com"
 DEFAULT_HEADERS = {
-    "User-Agent": "Mozilla/5.0",
-    "Referer": "https://careers.linecorp.com/",
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+    "Referer": "https://about.daangn.com/",
     "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
 }
 
 # --- 데이터베이스 설정 ---
@@ -72,33 +74,30 @@ def get_env_vars(*var_names: str) -> Union[str, tuple]:
 # --- 스크래핑 관련 함수 ---
 def scrape_jobs(session: requests.Session) -> List[Dict[str, str]]:
     """채용 공고 리스트를 스크래핑합니다."""
-    res = session.get(JOBS_BASE_URL, headers=DEFAULT_HEADERS)
+    params = {"q": "Engineer"}
+    target_url = f"{JOB_BASE_URL}/jobs/"
+    res = session.get(target_url, params=params, headers=DEFAULT_HEADERS)
     res.encoding = "utf-8"  # 응답 인코딩을 UTF-8로 설정
-    soup = BeautifulSoup(res.text, "html.parser", from_encoding="utf-8")
+    soup = BeautifulSoup(res.text, "html.parser")
     jobs = []
 
-    for li in soup.select("ul.job_list li"):
+    for li in soup.select("ul.c-jpGEAj li.c-deAcZv"):
         a_tag = li.find("a", href=True)
-        h3_tag = li.find("h3", class_="title")
-        date_span = li.find("span", class_="date")
-        text_filter = li.find("div", class_="text_filter")
-
-        if not (a_tag and h3_tag and text_filter):
+        if not a_tag:
             continue
 
-        description_text = text_filter.get_text(strip=True)
-
-        if "Taipei" in description_text or "Engineering" not in description_text:
-            continue
-
+        job_title = a_tag.find("h3", class_="c-boyXyq").get_text(strip=True)
         job_link = a_tag["href"]
-        job_title = h3_tag.find(text=True, recursive=False).strip()
-        uploaded_date = date_span.get_text(strip=True)[:10]
+        if (
+            "engineer" not in job_title.lower()
+            and "developer" not in job_title.lower()
+            and "scientist" not in job_title.lower()
+        ):
+            continue
         jobs.append(
             {
                 "title": job_title,
-                "link": f"https://careers.linecorp.com{job_link}",
-                "uploaded_date": uploaded_date,
+                "link": f"https://about.daangn.com{job_link}",
             }
         )
 
@@ -109,9 +108,20 @@ def scrape_job_detail(session: requests.Session, url: str) -> str:
     """상세 채용 공고 내용을 스크래핑합니다."""
     res = session.get(url, headers={"User-Agent": "Mozilla/5.0"})
     soup = BeautifulSoup(res.content, "html.parser")
-    section = soup.find("section", id="jobs-contents")
 
-    return section.get_text(separator="\n", strip=True) if section else "상세 내용 없음"
+    content_elem = soup.select_one("article.c-kJtTwH")
+
+    detail = content_elem.get_text(separator="\n", strip=True) if content_elem else None
+
+    json_ld_tags = soup.find_all("script", type="application/ld+json")
+    uploaded_date = None
+    for tag in json_ld_tags:
+        data = json.loads(tag.string)
+        date_posted = data.get("datePosted", None)
+        if date_posted:
+            uploaded_date = date_posted
+
+    return detail, uploaded_date
 
 
 # --- Gemini 추출 함수 ---
@@ -191,7 +201,7 @@ def main():
     )
     test_mode = test_mode == "1"
     session = requests.Session()
-    company_name = "라인플러스"
+    company_name = "당근"
 
     jobs = scrape_jobs(session)
     logging.info(f"총 {len(jobs)}건 추출했습니다.")
@@ -199,7 +209,7 @@ def main():
     for idx, job in enumerate(jobs, 1):
         logging.info(f"공고 처리 중... ({idx}/{len(jobs)})")
         logging.info(f"공고: {job['title']} - {job['link']}")
-        detail_text = scrape_job_detail(session, job["link"])
+        detail_text, uploaded_date = scrape_job_detail(session, job["link"])
 
         logging.info("Gemini를 통해 구조화된 데이터 추출 중...")
         job_info_response = extract_structured_data_with_gemini(
@@ -210,7 +220,7 @@ def main():
             affiliate_company_name=company_name,
             link=job["link"],
             job_title=job["title"],
-            uploaded_date=datetime.strptime(job["uploaded_date"], "%Y-%m-%d").date(),
+            uploaded_date=datetime.strptime(uploaded_date, "%Y-%m-%d").date(),
             **job_info_response.model_dump(),
         )
 
@@ -232,7 +242,7 @@ def main():
                             """
                             UPDATE job_info SET
                                 company_name             = %s,
-                                job_title               = %s, 
+                                job_title               = %s,
                                 affiliate_company_name   = %s,
                                 team_info               = %s,
                                 responsibilities        = %s,
