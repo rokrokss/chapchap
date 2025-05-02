@@ -13,13 +13,21 @@ const Layout = () => {
         <NavigationMenu>
           <NavigationMenuList>
             <NavigationMenuItem>
-              <NavLink to="/">
-                <NavigationMenuLink>공고</NavigationMenuLink>
+              <NavLink to="/" end>
+                {({ isActive }) => (
+                  <NavigationMenuLink className={isActive ? 'font-bold' : ''}>
+                    공고
+                  </NavigationMenuLink>
+                )}
               </NavLink>
             </NavigationMenuItem>
             <NavigationMenuItem>
               <NavLink to="/match">
-                <NavigationMenuLink>매칭</NavigationMenuLink>
+                {({ isActive }) => (
+                  <NavigationMenuLink className={isActive ? 'font-bold' : ''}>
+                    매칭
+                  </NavigationMenuLink>
+                )}
               </NavLink>
             </NavigationMenuItem>
           </NavigationMenuList>

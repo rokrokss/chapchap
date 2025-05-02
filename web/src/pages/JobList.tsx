@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { fetchActiveJobs } from '@/services/jobs';
 
 type Job = {
   id: string;
@@ -26,26 +27,57 @@ type Job = {
 
 const JobList = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [page, setPage] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const observer = useRef<IntersectionObserver | null>(null);
+  const didMountRef = useRef(false); // StrictMode 방지용
+
+  const pageLimit = 15;
+
+  const loadMoreJobs = useCallback(async () => {
+    setLoading(true);
+    const newJobs = await fetchActiveJobs(page, pageLimit);
+    if (newJobs.length < pageLimit) {
+      setHasMore(false);
+    } else {
+      setJobs(prevJobs => [...prevJobs, ...newJobs]);
+    }
+    setLoading(false);
+  }, [page]);
 
   useEffect(() => {
-    const fetchJobs = async () => {
-      try {
-        const response = await fetch('http://localhost:8000/job_info/active');
-        const data = await response.json();
-        console.log(data);
-        setJobs(data);
-      } catch (error) {
-        console.error('Error fetching job info:', error);
-      }
-    };
+    if (didMountRef.current && hasMore) {
+      loadMoreJobs();
+    } else {
+      didMountRef.current = true;
+    }
+  }, [loadMoreJobs, hasMore]);
 
-    fetchJobs();
-  }, []);
+  const lastPostElementRef = useCallback(
+    (node: HTMLElement | null) => {
+      if (loading || !hasMore) return; // Stop observing if loading or no more posts
+      if (observer.current) observer.current.disconnect();
+
+      observer.current = new IntersectionObserver(entries => {
+        if (entries[0].isIntersecting) {
+          setPage(prevPage => prevPage + 1); // Trigger loading of new posts by changing page number
+        }
+      });
+
+      if (node) observer.current.observe(node);
+    },
+    [loading, hasMore]
+  );
 
   return (
     <Accordion type="single" collapsible className="w-3xl px-6">
-      {jobs.map(job => (
-        <AccordionItem key={job.id} value={job.id}>
+      {jobs.map((job, index) => (
+        <AccordionItem
+          key={job.id}
+          value={job.id}
+          ref={jobs.length === index + 1 ? lastPostElementRef : null}
+        >
           <AccordionTrigger>{`${job.job_title} at ${job.company_name}`}</AccordionTrigger>
           <AccordionContent>
             <p>
@@ -90,6 +122,7 @@ const JobList = () => {
           </AccordionContent>
         </AccordionItem>
       ))}
+      {loading && <p>Loading...</p>}
     </Accordion>
   );
 };

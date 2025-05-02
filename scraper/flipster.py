@@ -82,6 +82,8 @@ def scrape_jobs(session: requests.Session) -> List[Dict[str, str]]:
         title = job["title"]
         if job["team"]["value"] != "engineering":
             continue
+        if job["location"]["value"] != "south-korea":
+            continue
         url = f"{JOB_BASE_URL}/jobs/{job_id}"
 
         jobs.append({"id": job_id, "title": title, "link": url})
