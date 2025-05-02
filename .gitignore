@@ -39,3 +39,5 @@ pgdata
 node_modules
 
 .cursor
+
+__pycache__

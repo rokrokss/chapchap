@@ -3,7 +3,6 @@ import Layout from './pages/Layout';
 import JobList from './pages/JobList';
 import JobMatcher from './pages/JobMatcher';
 import NoPage from './pages/NoPage';
-import './App.css';
 
 function App() {
   return (

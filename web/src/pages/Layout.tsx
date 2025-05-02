@@ -1,21 +1,34 @@
-import { Outlet, Link } from 'react-router-dom';
+import { Outlet, NavLink } from 'react-router-dom';
+import {
+  NavigationMenu,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+} from '@/components/ui/navigation-menu';
 
 const Layout = () => {
   return (
-    <>
-      <nav>
-        <ul>
-          <li>
-            <Link to="/">JobList</Link>
-          </li>
-          <li>
-            <Link to="/match">JobMatcher</Link>
-          </li>
-        </ul>
-      </nav>
-
-      <Outlet />
-    </>
+    <div className="flex flex-col min-h-screen">
+      <div className="flex justify-center py-1">
+        <NavigationMenu>
+          <NavigationMenuList>
+            <NavigationMenuItem>
+              <NavLink to="/">
+                <NavigationMenuLink>공고</NavigationMenuLink>
+              </NavLink>
+            </NavigationMenuItem>
+            <NavigationMenuItem>
+              <NavLink to="/match">
+                <NavigationMenuLink>매칭</NavigationMenuLink>
+              </NavLink>
+            </NavigationMenuItem>
+          </NavigationMenuList>
+        </NavigationMenu>
+      </div>
+      <div className="flex-1 flex justify-center">
+        <Outlet />
+      </div>
+    </div>
   );
 };
 

@@ -12,12 +12,23 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@radix-ui/react-accordion": "^1.2.8",
+    "@radix-ui/react-menubar": "^1.1.12",
+    "@radix-ui/react-navigation-menu": "^1.2.10",
+    "@radix-ui/react-slot": "^1.2.0",
+    "@tailwindcss/vite": "^4.1.5",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.503.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-router-dom": "^7.5.3"
+    "react-router-dom": "^7.5.3",
+    "tailwind-merge": "^3.2.0",
+    "tailwindcss": "^4.1.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.22.0",
+    "@types/node": "^22.15.3",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^4.3.4",
@@ -28,6 +39,7 @@
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^16.0.0",
     "prettier": "^3.5.3",
+    "tw-animate-css": "^1.2.8",
     "typescript": "~5.7.2",
     "typescript-eslint": "^8.26.1",
     "vite": "^6.3.1"
