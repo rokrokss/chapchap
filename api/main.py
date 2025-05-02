@@ -1,43 +1,31 @@
 from fastapi import FastAPI
-from typing import List
-import asyncpg
-from dotenv import load_dotenv
-import os
+from routers import job_info
 from contextlib import asynccontextmanager
+from db.connection import get_db
 
-load_dotenv()
+from fastapi.middleware.cors import CORSMiddleware
 
-DB_CONFIG = {
-    "dbname": os.getenv("DB_NAME", "postgres"),
-    "user": os.getenv("DB_USER", "postgres"),
-    "password": os.getenv("DB_PASSWORD", "postgres"),
-    "host": os.getenv("DB_HOST", "localhost"),
-    "port": os.getenv("DB_PORT", "54322"),
-    "schema": os.getenv("DB_SCHEMA", "chapssal"),
-}
+
+origins = [
+    "http://localhost:5173",
+]
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.db = await asyncpg.create_pool(
-        database=DB_CONFIG["dbname"],
-        user=DB_CONFIG["user"],
-        password=DB_CONFIG["password"],
-        host=DB_CONFIG["host"],
-        port=DB_CONFIG["port"],
-        server_settings={"search_path": DB_CONFIG["schema"]},
-    )
+    app.state.db = await get_db()
     yield
     await app.state.db.close()
 
 
 app = FastAPI(lifespan=lifespan)
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-@app.get("/job_info", response_model=List[dict])
-async def get_job_info():
-    query = "SELECT * FROM job_info;"
-    print(app.state)
-    async with app.state.db.acquire() as connection:
-        rows = await connection.fetch(query)
-    return [dict(row) for row in rows]
+app.include_router(job_info.router)
