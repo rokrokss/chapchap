@@ -78,46 +78,61 @@ const JobList = () => {
           value={job.id}
           ref={jobs.length === index + 1 ? lastPostElementRef : null}
         >
-          <AccordionTrigger>{`${job.job_title} at ${job.company_name}`}</AccordionTrigger>
+          <AccordionTrigger>{`${job.job_title} @ ${job.company_name}`}</AccordionTrigger>
           <AccordionContent>
-            <p>
-              <strong>Affiliate Company:</strong> {job.affiliate_company_name}
+            <p className="mb-2">
+              <strong>회사:</strong> {job.affiliate_company_name}
             </p>
-            <p>
+            <p className="mb-2">
+              <strong>팀 소개</strong>
+              <div className="text-sm">{job.team_info}</div>
+            </p>
+            <p className="mb-2">
+              <strong>담당업무</strong>
+              <div className="text-sm">
+                {job.responsibilities.split('\n').map(line => (
+                  <p>{line}</p>
+                ))}
+              </div>
+            </p>
+            <p className="mb-2">
+              <strong>지원자격</strong>
+              <div className="text-sm">
+                {job.qualifications.split('\n').map(line => (
+                  <p>{line}</p>
+                ))}
+              </div>
+            </p>
+            <p className="mb-2">
+              <strong>우대사항</strong>
+              <div className="text-sm">
+                {job.preferred_qualifications.split('\n').map(line => (
+                  <p>{line}</p>
+                ))}
+              </div>
+            </p>
+            <p className="mb-2">
+              <strong>채용절차</strong>
+              <div className="text-sm">{job.hiring_process.join(' -> ')}</div>
+            </p>
+            <p className="mb-2">
+              <strong>추가정보</strong>
+              <div className="text-sm">
+                <div className="text-sm">
+                  {job.additional_info.split('\n').map(line => (
+                    <p>{line}</p>
+                  ))}
+                </div>
+              </div>
+            </p>
+            <p className="mb-2">
+              <strong>업데이트:</strong> {job.uploaded_date}
+            </p>
+            <p className="mb-2">
               <strong>Link:</strong>{' '}
               <a href={job.link} target="_blank" rel="noopener noreferrer">
-                {job.link}
+                공고 보러가기
               </a>
-            </p>
-            <p>
-              <strong>Team Info:</strong> {job.team_info}
-            </p>
-            <p>
-              <strong>Responsibilities:</strong> {job.responsibilities}
-            </p>
-            <p>
-              <strong>Qualifications:</strong> {job.qualifications}
-            </p>
-            <p>
-              <strong>Preferred Qualifications:</strong> {job.preferred_qualifications}
-            </p>
-            <p>
-              <strong>Hiring Process:</strong> {job.hiring_process.join(', ')}
-            </p>
-            <p>
-              <strong>Additional Info:</strong> {job.additional_info}
-            </p>
-            <p>
-              <strong>Uploaded Date:</strong> {job.uploaded_date}
-            </p>
-            <p>
-              <strong>Created At:</strong> {job.created_at}
-            </p>
-            <p>
-              <strong>Updated At:</strong> {job.updated_at}
-            </p>
-            <p>
-              <strong>Active:</strong> {job.is_active ? 'Yes' : 'No'}
             </p>
           </AccordionContent>
         </AccordionItem>

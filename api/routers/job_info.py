@@ -12,7 +12,7 @@ async def get_active_job_info(
     query = f"""
     SELECT * FROM job_info 
     WHERE is_active = true 
-    ORDER BY updated_at DESC 
+    ORDER BY uploaded_date DESC 
     LIMIT {limit} OFFSET {offset};
     """
     async with request.app.state.db.acquire() as connection:
