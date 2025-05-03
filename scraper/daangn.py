@@ -42,21 +42,21 @@ class JobInfo(BaseModel):
     affiliate_company_name: str
     link: str
     team_info: str
-    responsibilities: str
-    qualifications: str
-    preferred_qualifications: str
+    responsibilities: List[str]
+    qualifications: List[str]
+    preferred_qualifications: List[str]
     hiring_process: List[str]
-    additional_info: str
+    additional_info: List[str]
     uploaded_date: date
 
 
 class JobInfoResponse(BaseModel):
     team_info: str
-    responsibilities: str
-    qualifications: str
-    preferred_qualifications: str
+    responsibilities: List[str]
+    qualifications: List[str]
+    preferred_qualifications: List[str]
     hiring_process: List[str]
-    additional_info: str
+    additional_info: List[str]
 
 
 # --- 유틸 함수 ---
@@ -168,8 +168,7 @@ def extract_structured_data_with_gemini(
 - 당신은 회사가 아닙니다. '저희', '우리 회사' 같은 회사를 자칭하는 말은 사용하지 않고, 회사의 이름을 명시해주세요.
 - 채용공고가 사용하는 화살표, >, 괄호 등의 표시는 사용하지 않습니다.
 - 공고 전체가 영어로 쓰여졌을 경우, 한글로 재작성합니다.
-- 매우 중요: 담당업무, 지원자격, 우대사항, 추가사항은 불렛포인트를 이용해 리스트 형식으로 표현합니다.
-- 매우 중요: 채용프로세스는 리스트로 응답합니다.
+- 매우 중요: 담당업무, 지원자격, 우대사항, 채용프로세스, 추가사항은 리스트로 응답합니다.
 
 3. 2단계에서 재작성된 내용만을 사용하여, JSON 형식으로 최종 결과를 반환합니다.
 
@@ -230,6 +229,21 @@ def main():
 
             with psycopg.connect(**DB_CONFIG) as conn:
                 with conn.cursor() as cur:
+                    # 회사 ID 가져오기 또는 삽입
+                    cur.execute(
+                        "SELECT id FROM companies WHERE name = %s",
+                        (job_info.company_name,),
+                    )
+                    company = cur.fetchone()
+                    if company:
+                        company_id = company[0]
+                    else:
+                        cur.execute(
+                            "INSERT INTO companies (name) VALUES (%s) RETURNING id",
+                            (job_info.company_name,),
+                        )
+                        company_id = cur.fetchone()[0]
+
                     # 기존 공고가 있는지 확인
                     cur.execute(
                         "SELECT id FROM job_info WHERE link = %s", (job_info.link,)
@@ -241,7 +255,7 @@ def main():
                         cur.execute(
                             """
                             UPDATE job_info SET
-                                company_name             = %s,
+                                company_id             = %s,
                                 job_title               = %s,
                                 affiliate_company_name   = %s,
                                 team_info               = %s,
@@ -255,7 +269,7 @@ def main():
                             WHERE link = %s
                             """,
                             (
-                                job_info.company_name,
+                                company_id,
                                 job_info.job_title,
                                 job_info.affiliate_company_name,
                                 job_info.team_info,
@@ -272,7 +286,7 @@ def main():
                         cur.execute(
                             """
                             INSERT INTO job_info (
-                                company_name,
+                                company_id,
                                 affiliate_company_name,
                                 link,
                                 job_title,
@@ -288,7 +302,7 @@ def main():
                             )
                             """,
                             (
-                                job_info.company_name,
+                                company_id,
                                 job_info.affiliate_company_name,
                                 job_info.link,
                                 job_info.job_title,
