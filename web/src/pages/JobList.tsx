@@ -67,6 +67,7 @@ const JobList = () => {
       setSelectedCompanies(newSelectedCompanies);
       filterJobs(jobs, newSelectedCompanies, selectedTags);
     }
+    setAccordionOpen('');
   };
 
   const onClickTag = (event: React.MouseEvent<HTMLButtonElement>, jobId: string, tag: string) => {
@@ -82,6 +83,7 @@ const JobList = () => {
       setSelectedTags(newSelectedTags);
       filterJobs(jobs, selectedCompanies, newSelectedTags);
     }
+    setAccordionOpen('');
   };
 
   const filterJobs = async (
@@ -104,7 +106,7 @@ const JobList = () => {
       <Accordion
         type="single"
         collapsible
-        className="w-3xl px-6"
+        className="w-full max-w-3xl mx-auto px-6"
         value={accordianOpen}
         onValueChange={setAccordionOpen}
       >
