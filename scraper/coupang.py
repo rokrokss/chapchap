@@ -13,7 +13,7 @@ import psycopg
 # --- 기본 설정 ---
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
-# https://www.coupang.jobs/kr/jobs/?page=2&search=engineer&location=Seoul,%20South%20Korea&pagesize=100#results
+
 # --- 상수 ---
 JOB_BASE_URL = "https://www.coupang.jobs/kr/jobs"
 DEFAULT_HEADERS = {

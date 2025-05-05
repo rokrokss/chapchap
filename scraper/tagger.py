@@ -49,6 +49,7 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "서버 개발" in job_title
         or "server engineer" in job_title
         or "서버 소프트웨어" in job_title
+        or "plus 채용연계형 인턴십" in job_title
     ):
         tags.append("BE")
     if (
@@ -57,6 +58,7 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "frontend" in job_title
         or "도구개발" in job_title
         or "웹 개발" in job_title
+        or "호텔 서비스 개발" in job_title
     ):
         tags.append("FE")
     if "security" in job_title or "보안 " in job_title:
@@ -67,6 +69,7 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "시스템 엔지니어" in job_title
         or "data center" in job_title
         or "system developer" in job_title
+        or "systems developer" in job_title
     ):
         tags.append("SE")
     if "network engineer" in job_title:
@@ -78,6 +81,8 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "데이터엔지니어" in job_title
         or "data warehouse" in job_title
         or "data platform" in job_title
+        or "software engineer (data)" in job_title
+        or "software engineer (analytics engineering)" in job_title
     ):
         tags.append("DE")
     if (
