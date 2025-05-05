@@ -1,12 +1,13 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { fetchAllActiveJobs } from '@/services/jobs';
+import { fetchAllActiveJobs, fetchJobCountByCompany, fetchJobCountByTag } from '@/services/jobs';
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 
 type Job = {
   id: string;
@@ -34,29 +35,40 @@ const JobList = () => {
   const [accordianOpen, setAccordionOpen] = useState('');
   const [selectedCompanies, setSelectedCompanies] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [tagCounts, setTagCounts] = useState<{ tag_name: string; job_count: number }[]>([]);
+  const [companyCounts, setCompanyCounts] = useState<{ company_name: string; job_count: number }[]>(
+    []
+  );
 
   const loadAllActiveJobs = async () => {
     setLoading(true);
     const newJobs = await fetchAllActiveJobs();
-    console.log(newJobs);
     setJobs(newJobs);
     await filterJobs(newJobs, selectedCompanies, selectedTags);
     setLoading(false);
   };
 
+  const loadTagCounts = async () => {
+    const newTagCounts = await fetchJobCountByTag();
+    setTagCounts(newTagCounts);
+  };
+
+  const loadCompanyCounts = async () => {
+    const newCompanyCounts = await fetchJobCountByCompany();
+    setCompanyCounts(newCompanyCounts);
+  };
+
   useEffect(() => {
     loadAllActiveJobs();
+    loadTagCounts();
+    loadCompanyCounts();
   }, []);
 
   const onClickAccordion = (id: string) => {
     setAccordionOpen(accordianOpen === id ? '' : id);
   };
 
-  const onClickCompany = (
-    event: React.MouseEvent<HTMLButtonElement>,
-    jobId: string,
-    companyName: string
-  ) => {
+  const onClickCompany = (event: React.MouseEvent<HTMLButtonElement>, companyName: string) => {
     event.stopPropagation();
     if (selectedCompanies.includes(companyName)) {
       const newSelectedCompanies = selectedCompanies.filter(company => company !== companyName);
@@ -70,10 +82,8 @@ const JobList = () => {
     setAccordionOpen('');
   };
 
-  const onClickTag = (event: React.MouseEvent<HTMLButtonElement>, jobId: string, tag: string) => {
+  const onClickTag = (event: React.MouseEvent<HTMLButtonElement>, tag: string) => {
     event.stopPropagation();
-    console.log(jobId, tag);
-    console.log(selectedTags);
     if (selectedTags.includes(tag)) {
       const newSelectedTags = selectedTags.filter(t => t !== tag);
       setSelectedTags(newSelectedTags);
@@ -103,6 +113,31 @@ const JobList = () => {
 
   return (
     <div>
+      <div className="w-full max-w-3xl mx-auto px-6">
+        {companyCounts.map(company => (
+          <Button
+            key={company.company_name}
+            variant={selectedCompanies.includes(company.company_name) ? 'default' : 'outline'}
+            size="xs"
+            className="mr-1.5 duration-0 mb-1.5"
+            onClick={e => onClickCompany(e, company.company_name)}
+          >
+            {company.company_name} ({company.job_count})
+          </Button>
+        ))}
+        {tagCounts.map(tag => (
+          <Button
+            key={tag.tag_name}
+            variant={selectedTags.includes(tag.tag_name) ? 'default' : 'outline'}
+            size="xs"
+            className="mr-1.5 duration-0 mb-1.5"
+            onClick={e => onClickTag(e, tag.tag_name)}
+          >
+            {tag.tag_name} ({tag.job_count})
+          </Button>
+        ))}
+        <Separator className="mt-4" />
+      </div>
       <Accordion
         type="single"
         collapsible
@@ -121,7 +156,7 @@ const JobList = () => {
                   variant={selectedCompanies.includes(job.company_name) ? 'default' : 'outline'}
                   size="xs"
                   className="mr-1 duration-0"
-                  onClick={e => onClickCompany(e, job.id, job.company_name)}
+                  onClick={e => onClickCompany(e, job.company_name)}
                 >
                   {job.company_name}
                 </Button>
@@ -132,17 +167,18 @@ const JobList = () => {
                     }
                     size="xs"
                     className="mr-1 duration-0"
-                    onClick={e => onClickCompany(e, job.id, job.affiliate_company_name)}
+                    onClick={e => onClickCompany(e, job.affiliate_company_name)}
                   >
                     {job.affiliate_company_name}
                   </Button>
                 ) : null}
                 {job.tags.map(tag => (
                   <Button
+                    key={tag}
                     variant={selectedTags.includes(tag) ? 'default' : 'outline'}
                     size="xs"
                     className="mr-1 duration-0"
-                    onClick={e => onClickTag(e, job.id, tag)}
+                    onClick={e => onClickTag(e, tag)}
                   >
                     {tag}
                   </Button>
@@ -160,24 +196,24 @@ const JobList = () => {
               <div className="mb-2">
                 <strong>담당업무</strong>
                 <div className="text-sm">
-                  {job.responsibilities.map(line => (
-                    <div>- {line}</div>
+                  {job.responsibilities.map((line, index) => (
+                    <div key={`${job.id}-r-${index}`}>- {line}</div>
                   ))}
                 </div>
               </div>
               <div className="mb-2">
                 <strong>지원자격</strong>
                 <div className="text-sm">
-                  {job.qualifications.map(line => (
-                    <div>- {line}</div>
+                  {job.qualifications.map((line, index) => (
+                    <div key={`${job.id}-q-${index}`}>- {line}</div>
                   ))}
                 </div>
               </div>
               <div className="mb-2">
                 <strong>우대사항</strong>
                 <div className="text-sm">
-                  {job.preferred_qualifications.map(line => (
-                    <div>- {line}</div>
+                  {job.preferred_qualifications.map((line, index) => (
+                    <div key={`${job.id}-pq-${index}`}>- {line}</div>
                   ))}
                 </div>
               </div>
@@ -189,8 +225,8 @@ const JobList = () => {
                 <strong>추가정보</strong>
                 <div className="text-sm">
                   <div className="text-sm">
-                    {job.additional_info.map(line => (
-                      <div>- {line}</div>
+                    {job.additional_info.map((line, index) => (
+                      <div key={`${job.id}-ai-${index}`}>- {line}</div>
                     ))}
                   </div>
                 </div>

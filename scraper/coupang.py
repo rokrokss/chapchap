@@ -111,7 +111,7 @@ def scrape_jobs(session: requests.Session) -> List[Dict[str, str]]:
                     elif (
                         affiliate_company_name.lower() == "coupang fulfillment services"
                     ):
-                        affiliate_company_name = "쿠팡풀필먼스서비스"
+                        affiliate_company_name = "쿠팡풀필먼트서비스"
 
                     if (
                         (
@@ -279,6 +279,21 @@ def main():
                         )
                         company_id = cur.fetchone()[0]
 
+                    # 자회사 ID 가져오기 또는 삽입
+                    cur.execute(
+                        "SELECT id FROM affiliate_companies WHERE name = %s",
+                        (job_info.affiliate_company_name,),
+                    )
+                    affiliate_company = cur.fetchone()
+                    if affiliate_company:
+                        affiliate_company_id = affiliate_company[0]
+                    else:
+                        cur.execute(
+                            "INSERT INTO affiliate_companies (name, parent_company_id) VALUES (%s, %s) RETURNING id",
+                            (job_info.affiliate_company_name, company_id),
+                        )
+                        affiliate_company_id = cur.fetchone()[0]
+
                     # 기존 공고가 있는지 확인
                     cur.execute(
                         "SELECT id FROM job_info WHERE link = %s", (job_info.link,)
@@ -291,30 +306,27 @@ def main():
                             """
                             UPDATE job_info SET
                                 company_id             = %s,
-                                job_title               = %s,
-                                affiliate_company_name   = %s,
-                                team_info               = %s,
-                                responsibilities        = %s,
-                                qualifications          = %s,
+                                affiliate_company_id   = %s,
+                                job_title              = %s,
+                                team_info              = %s,
+                                responsibilities       = %s,
+                                qualifications         = %s,
                                 preferred_qualifications = %s,
-                                hiring_process          = %s,
-                                additional_info         = %s,
-                                uploaded_date           = %s,
-                                updated_at              = NOW(),
-                                is_active               = true
+                                hiring_process         = %s,
+                                additional_info        = %s,
+                                updated_at             = NOW()
                             WHERE link = %s
                             """,
                             (
                                 company_id,
+                                affiliate_company_id,
                                 job_info.job_title,
-                                job_info.affiliate_company_name,
                                 job_info.team_info,
                                 job_info.responsibilities,
                                 job_info.qualifications,
                                 job_info.preferred_qualifications,
                                 job_info.hiring_process,
                                 job_info.additional_info,
-                                job_info.uploaded_date,
                                 job_info.link,
                             ),
                         )
@@ -323,7 +335,7 @@ def main():
                             """
                             INSERT INTO job_info (
                                 company_id,
-                                affiliate_company_name,
+                                affiliate_company_id,
                                 link,
                                 job_title,
                                 team_info,
@@ -339,7 +351,7 @@ def main():
                             """,
                             (
                                 company_id,
-                                job_info.affiliate_company_name,
+                                affiliate_company_id,
                                 job_info.link,
                                 job_info.job_title,
                                 job_info.team_info,
