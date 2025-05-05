@@ -37,7 +37,7 @@ const Layout = () => {
                   }
                   asChild
                 >
-                  <Link to="/match">매칭</Link>
+                  <Link to="/match">AI 매칭</Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
             </NavigationMenuList>
