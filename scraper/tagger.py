@@ -171,6 +171,13 @@ def main():
 
             conn.commit()
 
+            cur.execute(
+                """
+                UPDATE job_info SET is_active = false WHERE updated_at < NOW() - INTERVAL '2 days'
+                """
+            )
+            conn.commit()
+
 
 if __name__ == "__main__":
     main()
