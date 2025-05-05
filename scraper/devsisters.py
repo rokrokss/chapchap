@@ -9,16 +9,17 @@ from google import genai
 from google.genai import types
 from datetime import datetime, date
 import psycopg
+import json
 
 # --- 기본 설정 ---
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 
 # --- 상수 ---
-JOB_BASE_URL = "https://careers.flipster.io"
+JOBS_BASE_URL = "https://careers.devsisters.com"
 DEFAULT_HEADERS = {
     "User-Agent": "Mozilla/5.0",
-    "Referer": "https://career.flipster.io/",
+    "Referer": "https://careers.devsisters.com/",
     "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
 }
 
@@ -69,24 +70,44 @@ def get_env_vars(*var_names: str) -> Union[str, tuple]:
     return tuple(values) if len(values) > 1 else values[0]
 
 
+#   <script id="__NEXT_DATA__" type="application/json">
+
+
 # --- 스크래핑 관련 함수 ---
 def scrape_jobs(session: requests.Session) -> List[Dict[str, str]]:
+    """채용 공고 리스트를 스크래핑합니다."""
+    params = {"occupations": "개발"}
+    res = session.get(
+        f"{JOBS_BASE_URL}/position", params=params, headers=DEFAULT_HEADERS
+    )
+    res.encoding = "utf-8"  # 응답 인코딩을 UTF-8로 설정
+    soup = BeautifulSoup(res.text, "html.parser", from_encoding="utf-8")
+
+    json_data = soup.find_all("script", type="application/json", id="__NEXT_DATA__")
+    json_data = json.loads(json_data[0].string)["props"]["pageProps"][
+        "dehydratedState"
+    ]["queries"]
+    states = []
+    jobs_raw_data = []
+    for query in json_data:
+        if query["state"]["data"]:
+            states.append(query["state"]["data"])
+    for state in states:
+        if isinstance(state, list):
+            jobs_raw_data.extend(state)
+
     jobs = []
-    res = session.get(f"{JOB_BASE_URL}/api/postings", headers=DEFAULT_HEADERS)
-    data = res.json()
 
-    scraped_jobs = data.get("jobs", [])
-
-    for job in scraped_jobs:
-        job_id = job["id"]
-        title = job["title"]
-        if job["team"]["value"] != "engineering":
-            continue
-        if job["location"]["value"] != "south-korea":
-            continue
-        url = f"{JOB_BASE_URL}/jobs/{job_id}"
-
-        jobs.append({"id": job_id, "title": title, "link": url})
+    for job_raw_data in jobs_raw_data:
+        job_id = job_raw_data["openingId"]
+        job_title = job_raw_data["title"]
+        job_link = f"{JOBS_BASE_URL}/o/{job_id}"
+        uploaded_date = job_raw_data["openingJobPosition"]["openingJobPositionSetting"][
+            "createdAt"
+        ].split("T")[0]
+        jobs.append(
+            {"title": job_title, "link": job_link, "uploaded_date": uploaded_date}
+        )
 
     return jobs
 
@@ -95,12 +116,13 @@ def scrape_job_detail(session: requests.Session, url: str) -> str:
     """상세 채용 공고 내용을 스크래핑합니다."""
     res = session.get(url, headers=DEFAULT_HEADERS)
     soup = BeautifulSoup(res.content, "html.parser")
+    detail_wrap = soup.find("div", class_="dAecYk")
 
-    content_elem = soup.select_one("div.styles_lever_content__ql2gg")
-
-    detail = content_elem.get_text(separator="\n", strip=True) if content_elem else None
-
-    return detail
+    return (
+        detail_wrap.get_text(separator="\n", strip=True)
+        if detail_wrap
+        else "상세 내용 없음"
+    )
 
 
 # --- Gemini 추출 함수 ---
@@ -179,7 +201,7 @@ def main():
     )
     test_mode = test_mode == "1"
     session = requests.Session()
-    company_name = "플립스터"
+    company_name = "데브시스터즈"
 
     jobs = scrape_jobs(session)
     logging.info(f"총 {len(jobs)}건 추출했습니다.")
@@ -198,7 +220,7 @@ def main():
             affiliate_company_name=company_name,
             link=job["link"],
             job_title=job["title"],
-            uploaded_date=datetime.now().date(),
+            uploaded_date=datetime.strptime(job["uploaded_date"], "%Y-%m-%d").date(),
             **job_info_response.model_dump(),
         )
 

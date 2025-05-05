@@ -29,7 +29,7 @@ DB_CONFIG = {
     "password": os.getenv("DB_PASSWORD", "postgres"),
     "host": os.getenv("DB_HOST", "localhost"),
     "port": os.getenv("DB_PORT", "54322"),
-    "options": f"-c search_path={os.getenv('DB_SCHEMA', 'chapssal')}",
+    "options": f"-c search_path={os.getenv('DB_SCHEMA', 'chapchap')}",
 }
 
 

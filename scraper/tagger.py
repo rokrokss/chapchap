@@ -1,13 +1,7 @@
 import os
 import logging
-import requests
-from bs4 import BeautifulSoup
 from dotenv import load_dotenv
-from typing import List, Dict, Optional, Union
-from pydantic import BaseModel
-from google import genai
-from google.genai import types
-from datetime import datetime, date
+from typing import List
 import psycopg
 
 load_dotenv()
@@ -19,14 +13,16 @@ DB_CONFIG = {
     "password": os.getenv("DB_PASSWORD", "postgres"),
     "host": os.getenv("DB_HOST", "localhost"),
     "port": os.getenv("DB_PORT", "54322"),
-    "options": f"-c search_path={os.getenv('DB_SCHEMA', 'chapssal')}",
+    "options": f"-c search_path={os.getenv('DB_SCHEMA', 'chapchap')}",
 }
 
 
-def get_tag(job_title: str) -> List[str]:
+def get_tag(job_title: str, company_name: str) -> List[str]:
     tags = []
     job_title = job_title.lower()
 
+    if company_name == "데브시스터즈" and "클라이언트" in job_title:
+        tags.append("게임 클라이언트")
     if (
         "ai " in job_title
         or "machine learning" in job_title
@@ -52,6 +48,7 @@ def get_tag(job_title: str) -> List[str]:
         or "플랫폼 개발" in job_title
         or "서버 개발" in job_title
         or "server engineer" in job_title
+        or "서버 소프트웨어" in job_title
     ):
         tags.append("BE")
     if (
@@ -59,6 +56,7 @@ def get_tag(job_title: str) -> List[str]:
         or "프론트엔드" in job_title
         or "frontend" in job_title
         or "도구개발" in job_title
+        or "웹 개발" in job_title
     ):
         tags.append("FE")
     if "security" in job_title or "보안 " in job_title:
@@ -78,9 +76,10 @@ def get_tag(job_title: str) -> List[str]:
         or "engineer, data" in job_title
         or "bi engineer" in job_title
         or "데이터엔지니어" in job_title
+        or "data warehouse" in job_title
+        or "data platform" in job_title
     ):
         tags.append("DE")
-
     if (
         "안드로이드" in job_title
         or "ios" in job_title
@@ -127,6 +126,7 @@ def main():
             "DA",
             "DB",
             "DevOps",
+            "게임 클라이언트",
         ]
 
         with conn.cursor() as cur:
@@ -138,15 +138,21 @@ def main():
                 )
             conn.commit()
 
-            cur.execute("SELECT id, job_title FROM job_info")
+            cur.execute(
+                """
+                SELECT j.id, j.job_title, c.name as company_name 
+                FROM job_info j
+                LEFT JOIN companies c ON j.company_id = c.id
+                """
+            )
             jobs = cur.fetchall()
 
             cur.execute("SELECT id, name FROM tags")
             tag_dict = {name: id for id, name in cur.fetchall()}
 
-            for job_id, job_title in jobs:
+            for job_id, job_title, company_name in jobs:
                 job_title_lower = (job_title or "").lower()
-                tags = get_tag(job_title_lower)
+                tags = get_tag(job_title_lower, company_name)
 
                 logging.info(f"Tagging job_title={job_title} with tags={tags}")
 

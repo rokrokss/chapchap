@@ -38,11 +38,11 @@ async def get_job_count_by_tag(
             t.name AS tag_name,
             COUNT(jt.job_id) AS job_count
         FROM
-            chapssal.tags t
+            chapchap.tags t
         LEFT JOIN
-            chapssal.job_tags jt ON t.id = jt.tag_id
+            chapchap.job_tags jt ON t.id = jt.tag_id
         LEFT JOIN
-            chapssal.job_info j ON jt.job_id = j.id
+            chapchap.job_info j ON jt.job_id = j.id
         WHERE
             j.is_active = true
         GROUP BY
@@ -64,9 +64,9 @@ async def get_job_count_by_company(
             c.name AS company_name,
             COUNT(j.id) AS job_count
         FROM
-            chapssal.job_info j
+            chapchap.job_info j
         JOIN
-            chapssal.companies c ON j.company_id = c.id
+            chapchap.companies c ON j.company_id = c.id
         WHERE
             j.is_active = true
         GROUP BY
@@ -89,13 +89,13 @@ async def get_job_count_by_affiliate_company(
             pc.name AS parent_company_name,
             COUNT(j.id) AS job_count
         FROM
-            chapssal.job_info j
+            chapchap.job_info j
         JOIN
-            chapssal.affiliate_companies ac ON j.affiliate_company_id = ac.id
+            chapchap.affiliate_companies ac ON j.affiliate_company_id = ac.id
         JOIN
-            chapssal.companies c ON j.company_id = c.id
+            chapchap.companies c ON j.company_id = c.id
         JOIN
-            chapssal.companies pc ON ac.parent_company_id = pc.id
+            chapchap.companies pc ON ac.parent_company_id = pc.id
         WHERE
             j.is_active = true AND
             ac.name != c.name

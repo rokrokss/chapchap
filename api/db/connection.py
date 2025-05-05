@@ -10,7 +10,7 @@ DB_CONFIG = {
     "password": os.getenv("DB_PASSWORD", "postgres"),
     "host": os.getenv("DB_HOST", "localhost"),
     "port": os.getenv("DB_PORT", "54322"),
-    "schema": os.getenv("DB_SCHEMA", "chapssal"),
+    "schema": os.getenv("DB_SCHEMA", "chapchap"),
 }
 
 

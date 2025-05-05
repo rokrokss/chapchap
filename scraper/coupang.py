@@ -30,7 +30,7 @@ DB_CONFIG = {
     "password": os.getenv("DB_PASSWORD", "postgres"),
     "host": os.getenv("DB_HOST", "localhost"),
     "port": os.getenv("DB_PORT", "54322"),
-    "options": f"-c search_path={os.getenv('DB_SCHEMA', 'chapssal')}",
+    "options": f"-c search_path={os.getenv('DB_SCHEMA', 'chapchap')}",
 }
 
 
@@ -100,6 +100,14 @@ def scrape_jobs(session: requests.Session) -> List[Dict[str, str]]:
                     affiliate_company_name = (
                         title[1 : title.find("]")].strip() if "]" in title else "쿠팡"
                     )
+                    if " — Coupang Play" in title:
+                        title = title.split(" — Coupang Play")[0].strip()
+                        affiliate_company_name = "쿠팡플레이"
+                    if " — Coupang Pay" in title:
+                        title = title.split(" — Coupang Pay")[0].strip()
+                        affiliate_company_name = "쿠팡페이"
+                    if "Eats" in title:
+                        affiliate_company_name = "쿠팡이츠"
                     title = title.split("]")[1].strip() if "]" in title else title
                     link = "https://www.coupang.jobs" + a_tag["href"]
                     if affiliate_company_name.lower() == "coupang":
@@ -112,6 +120,8 @@ def scrape_jobs(session: requests.Session) -> List[Dict[str, str]]:
                         affiliate_company_name.lower() == "coupang fulfillment services"
                     ):
                         affiliate_company_name = "쿠팡풀필먼트서비스"
+                    elif affiliate_company_name.lower() == "coupang play":
+                        affiliate_company_name = "쿠팡플레이"
 
                     if (
                         (
