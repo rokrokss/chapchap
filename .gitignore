@@ -9,12 +9,16 @@ web/.vscode/settings.json
 *.iml
 api/.idea
 
-api/.env
+api/.env.local
+api/.env.production
+api/.env.development
 api/storage/*
 
 scraper/.idea
 
-scraper/.env
+scraper/.env.local
+scraper/.env.production
+scraper/.env.development
 scraper/storage/*
 
 .vscode/*
