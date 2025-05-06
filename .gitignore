@@ -21,6 +21,14 @@ scraper/.env.production
 scraper/.env.development
 scraper/storage/*
 
+
+web/.idea
+
+web/.env.local
+web/.env.production
+web/.env.development
+web/storage/*
+
 .vscode/*
 !.vscode/launch.json
 pyrightconfig.json
