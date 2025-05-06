@@ -13,52 +13,39 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { fetchAnalyzeResume } from '@/services/resume';
 
 const formSchema = z.object({
-  username: z.string(),
-  resume: z.instanceof(File).optional(),
+  resume: z.instanceof(File),
 });
 
 const JobMatcher = () => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      username: '',
       resume: undefined,
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     console.log(values);
-  }
+    const data = await fetchAnalyzeResume(values.resume);
+    console.log(data);
+  };
 
   return (
     <div>
       <div className="w-full max-w-3xl mx-auto px-6">
         <Form {...form}>
-          <Label>
+          <Label className="mb-3 mt-2">
             이력서 분석 {'>'} 공고 매칭 {'>'} 스킬갭 분석 {'>'} AI커버레터
           </Label>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <FormField
               control={form.control}
-              name="username"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormDescription>This is your public display name.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
               name="resume"
               render={({ field: { value, onChange, ...fieldProps } }) => (
                 <FormItem>
-                  <FormLabel>이력서</FormLabel>
                   <FormControl>
                     <Input
                       {...fieldProps}
@@ -67,6 +54,7 @@ const JobMatcher = () => {
                       onChange={event => onChange(event.target.files && event.target.files[0])}
                     />
                   </FormControl>
+                  <FormDescription>이력서와 분석 결과는 서버에 보관되지 않습니다.</FormDescription>
                 </FormItem>
               )}
             />

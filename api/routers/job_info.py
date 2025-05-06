@@ -1,11 +1,10 @@
-from fastapi import APIRouter, Request, Query
+from fastapi import APIRouter, Request
 from typing import List
-from fastapi import Request
 
 router = APIRouter()
 
 
-@router.get("/job_info/all_active", response_model=List[dict])
+@router.get("/all_active", response_model=List[dict])
 async def get_all_active_job_info(
     request: Request,
 ):

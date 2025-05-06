@@ -11,7 +11,7 @@ from datetime import datetime, date
 import psycopg
 
 # --- 기본 설정 ---
-load_dotenv()
+load_dotenv(dotenv_path=".env.local")
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 
 # --- 상수 ---
@@ -186,7 +186,7 @@ def extract_structured_data_with_gemini(
 # --- 메인 실행 ---
 def main():
     api_key, model_type, test_mode = get_env_vars(
-        "GEMINI_APIKEY", "GEMINI_SYNTHETIC_DATA_GENERATION_MODEL", "TEST_MODE"
+        "GOOGLE_API_KEY", "GEMINI_SYNTHETIC_DATA_GENERATION_MODEL", "TEST_MODE"
     )
     test_mode = test_mode == "1"
     session = requests.Session()

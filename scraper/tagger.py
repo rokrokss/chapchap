@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from typing import List
 import psycopg
 
-load_dotenv()
+load_dotenv(dotenv_path=".env.local")
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 
 DB_CONFIG = {
