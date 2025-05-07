@@ -5,11 +5,11 @@ import structlog
 from fastapi import FastAPI, Request, Response
 from routers.router import router
 from contextlib import asynccontextmanager
-from db.connection import get_db
 from core.config import settings
 from fastapi.middleware.cors import CORSMiddleware
 from uvicorn.protocols.utils import get_path_with_query_string
-
+from psycopg_pool import AsyncConnectionPool
+from core.langgraph.graph import LangGraphAgent
 from core.logging import setup_logging
 
 setup_logging(json_logs=settings.LOG_JSON_FORMAT, log_level=settings.LOG_LEVEL)
@@ -19,9 +19,18 @@ access_logger = structlog.stdlib.get_logger("api.access")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.db = await get_db()
+    app.state.db_pool = AsyncConnectionPool(
+        conninfo=str(settings.POSTGRES_URL),
+        open=False,
+        max_size=settings.POSTGRES_POOL_SIZE,
+        kwargs={"options": f"-c search_path={settings.POSTGRES_SCHEMA}"},
+    )
+    await app.state.db_pool.open(wait=True)
+
+    app.state.agent = await LangGraphAgent.create()
     yield
-    await app.state.db.close()
+    await app.state.db_pool.close()
+    await app.state.agent.close()
 
 
 app = FastAPI(title=settings.PROJECT_NAME, version=settings.VERSION, lifespan=lifespan)

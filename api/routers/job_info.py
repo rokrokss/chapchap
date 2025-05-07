@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Request
 from typing import List
+from psycopg.rows import dict_row
 
 router = APIRouter()
 
@@ -23,8 +24,10 @@ async def get_all_active_job_info(
         GROUP BY j.id, c.name, ac.name
         ORDER BY j.uploaded_date DESC;
     """
-    async with request.app.state.db.acquire() as connection:
-        rows = await connection.fetch(query)
+    async with request.app.state.db_pool.connection() as conn:
+        async with conn.cursor(row_factory=dict_row) as cur:
+            await cur.execute(query)
+            rows = await cur.fetchall()
     return [dict(row) for row in rows]
 
 
@@ -49,8 +52,10 @@ async def get_job_count_by_tag(
         ORDER BY
             job_count DESC;
     """
-    async with request.app.state.db.acquire() as connection:
-        rows = await connection.fetch(query)
+    async with request.app.state.db_pool.connection() as conn:
+        async with conn.cursor(row_factory=dict_row) as cur:
+            await cur.execute(query)
+            rows = await cur.fetchall()
     return [dict(row) for row in rows]
 
 
@@ -73,8 +78,10 @@ async def get_job_count_by_company(
         ORDER BY
             job_count DESC;
     """
-    async with request.app.state.db.acquire() as connection:
-        rows = await connection.fetch(query)
+    async with request.app.state.db_pool.connection() as conn:
+        async with conn.cursor(row_factory=dict_row) as cur:
+            await cur.execute(query)
+            rows = await cur.fetchall()
     return [dict(row) for row in rows]
 
 
@@ -104,8 +111,10 @@ async def get_job_count_by_affiliate_company(
         ORDER BY
             job_count DESC;
     """
-    async with request.app.state.db.acquire() as connection:
-        rows = await connection.fetch(query)
+    async with request.app.state.db_pool.connection() as conn:
+        async with conn.cursor(row_factory=dict_row) as cur:
+            await cur.execute(query)
+            rows = await cur.fetchall()
     return [dict(row) for row in rows]
 
 
