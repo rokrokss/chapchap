@@ -3,7 +3,8 @@ from fastapi import APIRouter, Request, File, UploadFile, BackgroundTasks
 from langchain_community.document_loaders import PyMuPDFLoader
 import structlog
 from tempfile import NamedTemporaryFile
-from core.langgraph.graph import LangGraphAgent, State
+from core.langgraph.graph import LangGraphAgent, Message
+from typing import List
 
 router = APIRouter()
 
@@ -36,19 +37,15 @@ async def analyze_resume(
 
     agent: LangGraphAgent = request.app.state.agent
 
-    config = {"configurable": {"thread_id": session_id}}
+    messages: List[Message] = [
+        Message(
+            role="system",
+            content="아래 이력서를 요약해줘. 경력, 기술, 역할 중심으로 간단히 써줘.",
+        ),
+        Message(role="user", content=full_text),
+    ]
 
-    state: State = {
-        "messages": [
-            {
-                "role": "system",
-                "content": "아래 이력서를 요약해줘. 경력, 기술, 역할 중심으로 간단히 써줘.",
-            },
-            {"role": "user", "content": full_text},
-        ]
-    }
+    await agent.clear_chat_history(session_id)
+    result = await agent.get_response(messages, session_id)
 
-    result = await agent._graph.ainvoke(state, config)
-    summary = result["messages"][-1].content
-
-    return {"summary": summary, "session_id": session_id}
+    return {"summary": result[-1].content, "session_id": session_id}

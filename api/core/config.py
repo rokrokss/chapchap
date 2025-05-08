@@ -105,6 +105,11 @@ class Settings:
             os.getenv("DEFAULT_LLM_TEMPERATURE", "0.2")
         )
         self.LLM_DB_POOL_SIZE = int(os.getenv("LLM_DB_POOL_SIZE", "10"))
+        self.CHECKPOINT_TABLES = [
+            "checkpoint_blobs",
+            "checkpoint_writes",
+            "checkpoints",
+        ]
 
 
 # Create settings instance
