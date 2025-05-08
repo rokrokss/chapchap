@@ -1,13 +1,14 @@
-import axios from 'axios';
-
 const API_URL = import.meta.env.VITE_API_URL;
 
-export const fetchAnalyzeResume = async (file: File) => {
+export const fetchAnalyzeResumeStream = async (file: File) => {
   const formData = new FormData();
   formData.append('file', file);
-  const response = await axios.post(`${API_URL}/resume/analyze`, formData, {
-    withCredentials: true,
-    headers: { 'content-type': file.type },
+
+  const response = await fetch(`${API_URL}/resume/analyze`, {
+    method: 'POST',
+    body: formData,
+    credentials: 'include',
   });
-  return response.data;
+
+  return response.body?.getReader();
 };

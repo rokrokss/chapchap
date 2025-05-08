@@ -14,7 +14,9 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { fetchAnalyzeResume } from '@/services/resume';
+import { fetchAnalyzeResumeStream } from '@/services/resume';
+import { Loader2 } from 'lucide-react';
+import { useAnimatedText } from '@/components/animated-text';
 
 const formSchema = z.object({
   resume: z.custom<File>(file => file instanceof File && file.type === 'application/pdf', {
@@ -24,6 +26,9 @@ const formSchema = z.object({
 
 const JobMatcher = () => {
   const [summary, setSummary] = useState('');
+  const [loading, setLoading] = useState(false);
+  const animatedText = useAnimatedText(summary);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -33,9 +38,24 @@ const JobMatcher = () => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     console.log(values);
-    const data = await fetchAnalyzeResume(values.resume);
-    console.log(data);
-    setSummary(data.summary);
+    setLoading(true);
+    setSummary('');
+
+    const reader = await fetchAnalyzeResumeStream(values.resume);
+    const decoder = new TextDecoder('utf-8');
+
+    if (!reader) return;
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      const chunkObj = JSON.parse(chunk.replace(/\n/g, '\\n'));
+      setSummary(prev => prev + chunkObj['chunk']);
+    }
+
+    setLoading(false);
   };
 
   return (
@@ -66,15 +86,17 @@ const JobMatcher = () => {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="self-start">
-              분석 시작
+            <Button type="submit" className="self-start" disabled={loading}>
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : '분석 시작'}
             </Button>
           </form>
         </Form>
-        {summary ? (
+        {summary || loading ? (
           <div className="mt-4">
             <Label>이력서 요약</Label>
-            <div className="mt-2 p-4 border rounded-md">{summary}</div>
+            <div className="mt-2 p-4 border rounded-md text-sm" style={{ whiteSpace: 'pre-wrap' }}>
+              {animatedText || <Loader2 className="w-4 h-4 animate-spin" />}
+            </div>
           </div>
         ) : null}
       </div>
