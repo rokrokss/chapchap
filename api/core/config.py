@@ -110,6 +110,9 @@ class Settings:
             "checkpoint_writes",
             "checkpoints",
         ]
+        self.OPENAI_EMBEDDING_MODEL = os.getenv(
+            "OPENAI_EMBEDDING_MODEL", "text-embedding-3-small"
+        )
 
 
 # Create settings instance

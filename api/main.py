@@ -9,7 +9,7 @@ from core.config import settings
 from fastapi.middleware.cors import CORSMiddleware
 from uvicorn.protocols.utils import get_path_with_query_string
 from psycopg_pool import AsyncConnectionPool
-from core.langgraph.graph import LangGraphAgent
+from core.graph import LangGraphAgent
 from core.logging import setup_logging
 
 setup_logging(json_logs=settings.LOG_JSON_FORMAT, log_level=settings.LOG_LEVEL)

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -9,14 +9,16 @@ import {
   FormDescription,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { fetchAnalyzeResumeStream } from '@/services/resume';
+import { fetchAnalyzeResumeStream, fetchMatchJob } from '@/services/resume';
 import { Loader2 } from 'lucide-react';
 import { useAnimatedText } from '@/components/animated-text';
+import useResumeStore from '@/store/useResumeStore';
+import { Accordion } from '@/components/ui/accordion';
+import JobAccordionItem from '@/components/JobAccordionItem';
 
 const formSchema = z.object({
   resume: z.custom<File>(file => file instanceof File && file.type === 'application/pdf', {
@@ -25,9 +27,13 @@ const formSchema = z.object({
 });
 
 const JobMatcher = () => {
-  const [summary, setSummary] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [resumeUploaded, setResumeUploaded] = useState(false);
+  const { summary, matchedJobs, setSummary, setMatchedJobs } = useResumeStore();
+
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [matchedJobsLoading, setMatchedJobsLoading] = useState(false);
   const animatedText = useAnimatedText(summary);
+  const [accordianOpen, setAccordionOpen] = useState('');
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -36,11 +42,7 @@ const JobMatcher = () => {
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    console.log(values);
-    setLoading(true);
-    setSummary('');
-
+  const getResumeSummary = async (values: z.infer<typeof formSchema>) => {
     const reader = await fetchAnalyzeResumeStream(values.resume);
     const decoder = new TextDecoder('utf-8');
 
@@ -51,11 +53,35 @@ const JobMatcher = () => {
       if (done) break;
 
       const chunk = decoder.decode(value, { stream: true });
-      const chunkObj = JSON.parse(chunk.replace(/\n/g, '\\n'));
-      setSummary(prev => prev + chunkObj['chunk']);
+      const parsed = JSON.parse(chunk.replace(/\n/g, '\\n'));
+      const summary = useResumeStore.getState().summary;
+      useResumeStore.setState({ summary: summary + parsed['chunk'] });
     }
 
-    setLoading(false);
+    setSummaryLoading(false);
+
+    return useResumeStore.getState().summary;
+  };
+
+  const getMatchedJobs = async () => {
+    const matchJob = await fetchMatchJob();
+    console.log(matchJob);
+    setMatchedJobs(matchJob);
+    setMatchedJobsLoading(false);
+  };
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setSummaryLoading(true);
+    setMatchedJobsLoading(true);
+    setResumeUploaded(true);
+    setSummary('');
+    setMatchedJobs([]);
+    await getResumeSummary(values);
+    await getMatchedJobs();
+  };
+
+  const onClickAccordion = (id: string) => {
+    setAccordionOpen(accordianOpen === id ? '' : id);
   };
 
   return (
@@ -78,7 +104,7 @@ const JobMatcher = () => {
                     <Input
                       {...fieldProps}
                       type="file"
-                      accept="image/*, application/pdf"
+                      accept="application/pdf"
                       onChange={event => onChange(event.target.files && event.target.files[0])}
                     />
                   </FormControl>
@@ -86,17 +112,44 @@ const JobMatcher = () => {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="self-start" disabled={loading}>
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : '분석 시작'}
+            <Button type="submit" className="self-start" disabled={summaryLoading}>
+              {summaryLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : '분석 시작'}
             </Button>
           </form>
         </Form>
-        {summary || loading ? (
+        {summary || summaryLoading ? (
           <div className="mt-4">
             <Label>이력서 요약</Label>
             <div className="mt-2 p-4 border rounded-md text-sm" style={{ whiteSpace: 'pre-wrap' }}>
-              {animatedText || <Loader2 className="w-4 h-4 animate-spin" />}
+              {(resumeUploaded ? animatedText : summary) || (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              )}
             </div>
+          </div>
+        ) : null}
+        {matchedJobs.length > 0 || matchedJobsLoading ? (
+          <div className="mt-4">
+            <Label>공고 매칭</Label>
+            <Accordion
+              type="single"
+              collapsible
+              className="w-full max-w-3xl mx-auto mb-5"
+              value={accordianOpen}
+              onValueChange={setAccordionOpen}
+            >
+              {matchedJobs.map(job => (
+                <JobAccordionItem
+                  key={job.id}
+                  job={job}
+                  selectedCompanies={[]}
+                  selectedTags={[]}
+                  onClickAccordion={onClickAccordion}
+                  onClickCompany={() => null}
+                  onClickTag={() => null}
+                />
+              ))}
+              {matchedJobsLoading ? <Loader2 className="mt-5 ml-4 w-4 h-4 animate-spin" /> : null}
+            </Accordion>
           </div>
         ) : null}
       </div>

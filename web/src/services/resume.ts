@@ -1,3 +1,5 @@
+import axios from 'axios';
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 export const fetchAnalyzeResumeStream = async (file: File) => {
@@ -11,4 +13,11 @@ export const fetchAnalyzeResumeStream = async (file: File) => {
   });
 
   return response.body?.getReader();
+};
+
+export const fetchMatchJob = async () => {
+  const response = await axios.get(`${API_URL}/resume/match_job`, {
+    withCredentials: true,
+  });
+  return response.data;
 };

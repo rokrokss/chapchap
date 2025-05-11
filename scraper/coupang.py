@@ -250,6 +250,7 @@ def main():
     test_mode = test_mode == "1"
     session = requests.Session()
     company_name = "쿠팡"
+    alternate_names = ["coupang"]
 
     jobs = scrape_jobs(session)
     logging.info(f"총 {len(jobs)}건 추출했습니다.")
@@ -295,6 +296,15 @@ def main():
                         )
                         company_id = cur.fetchone()[0]
 
+                    if alternate_names:
+                        cur.executemany(
+                            "INSERT INTO company_alternate_names (company_id, alternate_name) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+                            [
+                                (company_id, alternate_name)
+                                for alternate_name in alternate_names
+                            ],
+                        )
+
                     # 자회사 ID 가져오기 또는 삽입
                     cur.execute(
                         "SELECT id FROM affiliate_companies WHERE name = %s",
@@ -326,8 +336,6 @@ def main():
                                 job_title              = %s,
                                 team_info              = %s,
                                 responsibilities       = %s,
-                                qualifications         = %s,
-                                preferred_qualifications = %s,
                                 hiring_process         = %s,
                                 additional_info        = %s,
                                 updated_at             = NOW()
@@ -339,8 +347,6 @@ def main():
                                 job_info.job_title,
                                 job_info.team_info,
                                 job_info.responsibilities,
-                                job_info.qualifications,
-                                job_info.preferred_qualifications,
                                 job_info.hiring_process,
                                 job_info.additional_info,
                                 job_info.link,
@@ -356,13 +362,11 @@ def main():
                                 job_title,
                                 team_info,
                                 responsibilities,
-                                qualifications,
-                                preferred_qualifications,
                                 hiring_process,
                                 additional_info,
                                 uploaded_date
                             ) VALUES (
-                                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                                %s, %s, %s, %s, %s, %s, %s, %s, %s
                             )
                             """,
                             (
@@ -372,13 +376,47 @@ def main():
                                 job_info.job_title,
                                 job_info.team_info,
                                 job_info.responsibilities,
-                                job_info.qualifications,
-                                job_info.preferred_qualifications,
                                 job_info.hiring_process,
                                 job_info.additional_info,
                                 job_info.uploaded_date,
                             ),
                         )
+
+                    cur.execute(
+                        "SELECT id FROM job_info WHERE link = %s", (job_info.link,)
+                    )
+                    job_id = cur.fetchone()[0]
+
+                    # 기존 문장 삭제
+                    cur.execute(
+                        "DELETE FROM job_qualification_sentences WHERE job_id = %s",
+                        (job_id,),
+                    )
+
+                    # 새로운 문장 삽입 (sentence_index 포함)
+                    qualification_sentences = (
+                        [
+                            (job_id, "required", idx, sentence)
+                            for idx, sentence in enumerate(job_info.qualifications)
+                        ]
+                        + [
+                            (job_id, "preferred", idx, sentence)
+                            for idx, sentence in enumerate(
+                                job_info.preferred_qualifications
+                            )
+                        ]
+                        + [(job_id, "title", 0, job_info.job_title)]
+                    )
+
+                    cur.executemany(
+                        """
+                        INSERT INTO job_qualification_sentences (
+                            job_id, type, sentence_index, sentence
+                        ) VALUES (%s, %s, %s, %s)
+                        """,
+                        qualification_sentences,
+                    )
+
                     conn.commit()
         else:
             logging.error("구조화 실패")

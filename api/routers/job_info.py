@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Request
 from typing import List
 from psycopg.rows import dict_row
+from collections import defaultdict
 
 router = APIRouter()
 
@@ -9,7 +10,7 @@ router = APIRouter()
 async def get_all_active_job_info(
     request: Request,
 ):
-    query = """
+    job_query = """
         SELECT
         j.*,
         c.name AS company_name,
@@ -24,11 +25,35 @@ async def get_all_active_job_info(
         GROUP BY j.id, c.name, ac.name
         ORDER BY j.uploaded_date DESC;
     """
+
+    qualifications_query = """
+        SELECT job_id, type, sentence_index, sentence
+        FROM chapchap.job_qualification_sentences
+        WHERE type != 'title'
+        ORDER BY job_id, type, sentence_index
+    """
+
     async with request.app.state.db_pool.connection() as conn:
         async with conn.cursor(row_factory=dict_row) as cur:
-            await cur.execute(query)
-            rows = await cur.fetchall()
-    return [dict(row) for row in rows]
+            await cur.execute(job_query)
+            job_rows = await cur.fetchall()
+
+            await cur.execute(qualifications_query)
+            sentence_rows = await cur.fetchall()
+
+    qualifications_map = defaultdict(lambda: {"required": [], "preferred": []})
+    for row in sentence_rows:
+        qualifications_map[row["job_id"]][row["type"]].append(row["sentence"])
+
+    results = []
+    for job in job_rows:
+        job_dict = dict(job)
+        job_id = job_dict["id"]
+        job_dict["qualifications"] = qualifications_map[job_id]["required"]
+        job_dict["preferred_qualifications"] = qualifications_map[job_id]["preferred"]
+        results.append(job_dict)
+
+    return results
 
 
 @router.get("/tag/job_count", response_model=List[dict])
