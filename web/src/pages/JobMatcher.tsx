@@ -94,6 +94,9 @@ const JobMatcher = () => {
     setSummary('');
     setCoverLetter('');
     setMatchedJobs([]);
+    setAccordionOpen('');
+    setSelectedJobId('');
+    setSelectedJobName('');
     await getResumeSummary(values);
     await getMatchedJobs();
   };
