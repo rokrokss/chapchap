@@ -21,3 +21,12 @@ export const fetchMatchJob = async () => {
   });
   return response.data;
 };
+
+export const fetchGenerateCoverLetter = async (jobId: string) => {
+  const response = await fetch(`${API_URL}/resume/generate_cover_letter/${jobId}`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+
+  return response.body?.getReader();
+};

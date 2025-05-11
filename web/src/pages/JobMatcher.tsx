@@ -13,7 +13,11 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { fetchAnalyzeResumeStream, fetchMatchJob } from '@/services/resume';
+import {
+  fetchAnalyzeResumeStream,
+  fetchMatchJob,
+  fetchGenerateCoverLetter,
+} from '@/services/resume';
 import { Loader2 } from 'lucide-react';
 import { useAnimatedText } from '@/components/animated-text';
 import useResumeStore from '@/store/useResumeStore';
@@ -24,7 +28,6 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -37,11 +40,17 @@ const formSchema = z.object({
 
 const JobMatcher = () => {
   const [resumeUploaded, setResumeUploaded] = useState(false);
-  const { summary, matchedJobs, setSummary, setMatchedJobs } = useResumeStore();
+  const [selectedJobId, setSelectedJobId] = useState('');
+  const [selectedJobName, setSelectedJobName] = useState('');
+  const { summary, matchedJobs, coverLetter, setSummary, setMatchedJobs, setCoverLetter } =
+    useResumeStore();
 
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [matchedJobsLoading, setMatchedJobsLoading] = useState(false);
+  const [coverLetterLoading, setCoverLetterLoading] = useState(false);
+
   const animatedText = useAnimatedText(summary);
+  const animatedCoverLetter = useAnimatedText(coverLetter);
   const [accordianOpen, setAccordionOpen] = useState('');
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -83,6 +92,7 @@ const JobMatcher = () => {
     setMatchedJobsLoading(true);
     setResumeUploaded(true);
     setSummary('');
+    setCoverLetter('');
     setMatchedJobs([]);
     await getResumeSummary(values);
     await getMatchedJobs();
@@ -96,12 +106,38 @@ const JobMatcher = () => {
     event.stopPropagation();
   };
 
-  const onClickGenerateCoverLetter = (
-    event: React.MouseEvent<HTMLButtonElement>,
-    job_id: string
-  ) => {
+  const onClickJobSelectItem = (jobId: string) => {
+    setSelectedJobId(jobId);
+    for (const job of matchedJobs) {
+      if (job.id === jobId) {
+        setSelectedJobName(job.job_title + ' @ ' + job.company_name);
+        break;
+      }
+    }
+  };
+
+  const onClickGenerateCoverLetter = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
-    console.log('generate cover letter', job_id);
+    if (selectedJobId === '') return;
+    console.log('generate cover letter: ', selectedJobId);
+    setCoverLetter('');
+    setCoverLetterLoading(true);
+    const reader = await fetchGenerateCoverLetter(selectedJobId);
+    const decoder = new TextDecoder('utf-8');
+
+    if (!reader) return;
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      const parsed = JSON.parse(chunk.replace(/\n/g, '\\n'));
+      const coverLetter = useResumeStore.getState().coverLetter;
+      useResumeStore.setState({ coverLetter: coverLetter + parsed['chunk'] });
+    }
+
+    setCoverLetterLoading(false);
   };
 
   return (
@@ -112,7 +148,7 @@ const JobMatcher = () => {
             이력서 분석 {'>'} 공고 매칭 {'>'} AI커버레터
           </Label>
           <FormDescription className="mb-1">
-            PDF 형식의 이력서를 분석할 수 있습니다. 이력서와 분석 결과는 서버에 보관되지 않습니다.
+            PDF 형식의 이력서를 분석할 수 있습니다.
           </FormDescription>
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex w-full items-center gap-1">
             <FormField
@@ -152,13 +188,13 @@ const JobMatcher = () => {
             <div className="mt-4 mb-5">
               <Label className="font-bold mb-2">커버레터 생성</Label>
               <div className="flex items-center gap-2">
-                <Select>
+                <Select onValueChange={onClickJobSelectItem}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder={matchedJobs.length > 0 ? '추천공고' : '로딩 중...'} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      {matchedJobs.map((job, index) => (
+                      {matchedJobs.map(job => (
                         <SelectItem key={job.id} value={job.id}>
                           {job.job_title} @ {job.company_name}
                         </SelectItem>
@@ -166,11 +202,31 @@ const JobMatcher = () => {
                     </SelectGroup>
                   </SelectContent>
                 </Select>
-                <Button type="submit" className="self-start" disabled={summaryLoading}>
-                  {summaryLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : '커버레터 생성'}
+                <Button
+                  type="submit"
+                  className="self-start"
+                  disabled={matchedJobsLoading}
+                  onClick={e => onClickGenerateCoverLetter(e)}
+                >
+                  {matchedJobsLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    '커버레터 생성'
+                  )}
                 </Button>
               </div>
             </div>
+            {coverLetter || coverLetterLoading ? (
+              <div className="mt-4">
+                <Label className="font-bold mb-2">이력서 기반 커버레터 | {selectedJobName}</Label>
+                <div
+                  className="mt-2 p-4 border rounded-md text-sm"
+                  style={{ whiteSpace: 'pre-wrap' }}
+                >
+                  {animatedCoverLetter || <Loader2 className="w-4 h-4 animate-spin" />}
+                </div>
+              </div>
+            ) : null}
             <div className="mt-4">
               <Label className="font-bold">추천 채용공고 (적합도순)</Label>
               <Accordion

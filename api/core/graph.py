@@ -15,6 +15,7 @@ import numpy as np
 from psycopg.rows import dict_row
 from collections import defaultdict
 from langchain_core.messages import HumanMessage
+from core.prompts import rerank_job_prompt, cover_letter_prompt, resume_summary_prompt
 
 
 class JobMatch(TypedDict):
@@ -72,40 +73,24 @@ class LangGraphAgent:
             "messages": [await self.model.ainvoke(state["messages"])],
         }
 
+    def resume_summary_messages(self, resume_text):
+        messages: List[Message] = [
+            Message(
+                role="system",
+                content=resume_summary_prompt(),
+            ),
+            Message(role="user", content=resume_text),
+        ]
+
+        return messages
+
     async def stream_resume_summary(
         self,
+        messages: List[Message],
         resume_text: str,
         named_company_experiences: list[int],
         session_id: str,
     ) -> AsyncGenerator[str, None]:
-        config = {"configurable": {"thread_id": session_id}}
-
-        messages: List[Message] = [
-            Message(
-                role="system",
-                content=f"""
-아래 이력서를 읽고 지원자의 경력의 순서를 명시하고, 지원자가 가진 능력을 한 줄 씩 적어주세요.
-경력 기준 가장 강한 능력으로 보이는 것을 먼저 적어주세요.
-
-출력 형식:
-- "->"로 구분된 학력/경력
-- 능력 1
-- 능력 2
-- 능력 3
-...
-
-출력 예시:
-- 카이스트 학부 -> 크래프톤 (프론트엔드 엔지니어) -> 토스 (DevOps 엔지니어)
-- Java 및 Spring Framework 활용 개발 경험 및 AWS 환경 경험
-- React, Vue 등 최신 프론트엔드 프레임워크 및 유형 컴포넌트 UI 설계 경험
-- 광고 및 이커머스 도메인 경험
-- MLOps와 LLMOps 파이프라인 구현 및 관리
-- Kubernetes 등 컨테이너 오케스트레이션 시스템 활용 운영 경험
-- 대화형 AI, 음성인식, NLP 등 AI/ML 관련 솔루션 실무 경험
-                """,
-            ),
-            Message(role="user", content=resume_text),
-        ]
 
         try:
             async for token, _ in self.graph.astream(
@@ -114,7 +99,7 @@ class LangGraphAgent:
                     "resume_text": resume_text,
                     "named_company_experiences": named_company_experiences,
                 },
-                config,
+                {"configurable": {"thread_id": session_id}},
                 stream_mode="messages",
             ):
                 try:
@@ -219,40 +204,7 @@ class LangGraphAgent:
         return {"retrieved_jobs": results}
 
     async def _rerank_matches(self, state: MatchJobState) -> dict:
-        retrieved_jobs = state["retrieved_jobs"]
-        resume_text = state["resume_text"]
-        job_list = "\n\n".join(
-            [
-                f"공고번호 {i}. {job['job_title']} ({job['company_name']})\n"
-                f"  - 팀 소개: {job['team_info']}\n"
-                f"  - 담당업무:\n    " + "\n    ".join(job["responsibilities"]) + "\n"
-                f"  - 지원자격:\n    " + "\n    ".join(job["qualifications"]) + "\n"
-                f"  - 우대사항:\n    " + "\n    ".join(job["preferred_qualifications"])
-                for i, job in enumerate(retrieved_jobs)
-            ]
-        )
-        prompt = f"""
-다음은 당신이 가진 채용공고의 리스트입니다.
-당신은 이 채용공고 중 지원자가 적합한 {settings.RERANK_COUNT}개의 공고를 선별하고 적합한 순으로 정렬하고 설명을 첨부해야 합니다.
-적합한 이유는 100자 이내로 명시해야 합니다.
-지원자의 이름은 언급하지 않고 지원자라고 표현해야 합니다.
-
-이력서는 다음과 같습니다.
-===이력서 (정제되지 않은 텍스트)
-{resume_text}
-
-
-===채용공고 리스트
-{job_list}
-
-
-===출력 형식
-"공고번호" (key: job_idx)
-"공고이름" (key: job_title)
-"적합한 이유" (key: reason)
-
-{{ "results": [{{ "job_idx": "...", "job_title": "...", "reason": "..." }}, ...] }}
-"""
+        prompt = rerank_job_prompt(state["resume_text"], state["retrieved_jobs"])
         messages = [HumanMessage(content=prompt)]
         structured_llm = self.model.with_structured_output(RerankedJobList)
         rerank_output = await structured_llm.ainvoke(messages)
@@ -260,12 +212,66 @@ class LangGraphAgent:
 
         result = []
         for job in rerank_output.results:
-            job_info = retrieved_jobs[job.job_idx]
+            job_info = state["retrieved_jobs"][job.job_idx]
             job_info["reason"] = job.reason
             job_info["rank_title"] = job.job_title
             result.append(job_info)
 
         return {"reranked_results": result}
+
+    # coverletter
+
+    async def get_cover_letter_prompt(self, resume_text: str, job_id: str) -> str:
+        async with self._db_pool.connection() as conn:
+            async with conn.cursor(row_factory=dict_row) as cur:
+                await cur.execute(
+                    """
+                        SELECT
+                            j.*,
+                            c.name AS company_name,
+                            ac.name AS affiliate_company_name
+                        FROM job_info j
+                        JOIN companies c ON j.company_id = c.id 
+                        JOIN affiliate_companies ac ON j.affiliate_company_id = ac.id
+                        WHERE j.id = %s
+                    """,
+                    (job_id,),
+                )
+                job_row = await cur.fetchone()
+
+                await cur.execute(
+                    """
+                        SELECT job_id, type, sentence_index, sentence
+                        FROM chapchap.job_qualification_sentences
+                        WHERE type != 'title' AND job_id = %s
+                        ORDER BY job_id, type, sentence_index
+                    """,
+                    (job_id,),
+                )
+                sentence_rows = await cur.fetchall()
+
+        qualifications_map = defaultdict(lambda: {"required": [], "preferred": []})
+        for row in sentence_rows:
+            qualifications_map[row["job_id"]][row["type"]].append(row["sentence"])
+
+        job_dict = dict(job_row)
+        job_dict["qualifications"] = qualifications_map[job_id]["required"]
+        job_dict["preferred_qualifications"] = qualifications_map[job_id]["preferred"]
+
+        return cover_letter_prompt(resume_text, job_dict)
+
+    async def stream_cover_letter(self, prompt: str) -> AsyncGenerator[str, None]:
+        try:
+            async for chunk in self.model.astream(prompt):
+                try:
+                    yield chunk.content
+                except Exception as e:
+                    self.logger.error("error_processing_token", error=str(e))
+                    raise e
+
+        except Exception as e:
+            self.logger.error("error_stream", error=str(e))
+            raise e
 
     @classmethod
     async def create(cls) -> "LangGraphAgent":

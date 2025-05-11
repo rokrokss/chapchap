@@ -3,7 +3,7 @@ from fastapi import APIRouter, Request, File, UploadFile, BackgroundTasks
 from langchain_community.document_loaders import PyMuPDFLoader
 import structlog
 from tempfile import NamedTemporaryFile
-from core.graph import LangGraphAgent, Message, MatchJobState
+from core.graph import LangGraphAgent
 from typing import List, Any
 from fastapi.responses import StreamingResponse
 from psycopg.rows import dict_row
@@ -65,7 +65,6 @@ async def update_agent_state(
     agent: LangGraphAgent,
     session_id,
 ) -> None:
-    logger = structlog.get_logger("api.resume.update_agent_state")
     summary = [
         line.strip()[1:].strip().replace(" -> ", ", ").strip()
         for line in summary.strip().split("\n")
@@ -75,7 +74,6 @@ async def update_agent_state(
         {"configurable": {"thread_id": session_id}},
         {"summary_sentences": summary},
     )
-    logger.info("update_agent_state", session_id=session_id)
 
 
 @router.post("/analyze", response_model=dict)
@@ -84,10 +82,7 @@ async def analyze_resume(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
 ):
-    logger = structlog.get_logger("api.resume.analyze")
     session_id = request.cookies.get("session_id")
-
-    logger.info("analyze_resume", session_id=session_id)
 
     with NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
         tmp.write(await file.read())
@@ -108,12 +103,13 @@ async def analyze_resume(
 
     await agent.clear_chat_history(session_id)
 
+    messages = agent.resume_summary_messages(full_text)
+
     async def generate_response():
         chunks = []
         async for chunk in agent.stream_resume_summary(
-            full_text, named_company_experiences, session_id
+            messages, full_text, named_company_experiences, session_id
         ):
-            logger.info("chunk", chunk=chunk)
             if chunk == settings.DONE_TOKEN:
                 chunk = ""
                 await update_agent_state(
@@ -129,11 +125,29 @@ async def analyze_resume(
 
 @router.get("/match_job", response_model=List[Any])
 async def match_job(request: Request):
-    logger = structlog.get_logger("api.resume.match_job")
     session_id = request.cookies.get("session_id")
     agent: LangGraphAgent = request.app.state.agent
     agent_thread_config = {"configurable": {"thread_id": session_id}}
-    logger.info("match_job", session_id=session_id)
     state = await agent.graph.ainvoke(None, agent_thread_config)
 
     return state["reranked_results"]
+
+
+@router.get("/generate_cover_letter/{job_id}", response_model=dict)
+async def generate_cover_letter(request: Request, job_id: str):
+    logger = structlog.get_logger("api.resume.generate_cover_letter")
+    session_id = request.cookies.get("session_id")
+    agent: LangGraphAgent = request.app.state.agent
+    agent_thread_config = {"configurable": {"thread_id": session_id}}
+    logger.info("generate_cover_letter", job_id=job_id)
+
+    stateSnapshot = await agent.graph.aget_state(agent_thread_config)
+    resume_text = stateSnapshot.values["resume_text"]
+
+    cover_letter_prompt = await agent.get_cover_letter_prompt(resume_text, job_id)
+
+    async def generate_response():
+        async for chunk in agent.stream_cover_letter(cover_letter_prompt):
+            yield f'{{"chunk": "{chunk}", "session_id": "{session_id}"}}'
+
+    return StreamingResponse(generate_response(), media_type="application/json")
