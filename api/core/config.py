@@ -96,7 +96,6 @@ class Settings:
             "POSTGRES_URL", "postgres://postgres:postgres@localhost:54322/chapchap"
         )
         self.POSTGRES_POOL_SIZE = int(os.getenv("POSTGRES_POOL_SIZE", "20"))
-        self.POSTGRES_MAX_OVERFLOW = int(os.getenv("POSTGRES_MAX_OVERFLOW", "10"))
         self.POSTGRES_SCHEMA = os.getenv("POSTGRES_SCHEMA", "chapchap")
 
         # LLM Settings

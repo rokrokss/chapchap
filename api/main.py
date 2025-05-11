@@ -23,7 +23,7 @@ async def lifespan(app: FastAPI):
         conninfo=str(settings.POSTGRES_URL),
         open=False,
         max_size=settings.POSTGRES_POOL_SIZE,
-        max_lifetime=60,
+        max_lifetime=60 * 5,
         kwargs={"options": f"-c search_path={settings.POSTGRES_SCHEMA}"},
     )
     await app.state.db_pool.open(wait=True)
