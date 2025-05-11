@@ -1,0 +1,16 @@
+[variables]
+NIXPACKS_METADATA = 'python'
+PYTHONUNBUFFERED = '1'
+
+[phases.setup]
+nixPkgs = [
+    'python313',
+    'gcc',
+    'libpq-dev',
+]
+
+[phases.install]
+cmds = ["python -m pip install poetry", "poetry install"]
+
+[start]
+cmd = "uvicorn main:app --host 0.0.0.0 --port $PORT --log-config uvicorn_disable_logging.json"
