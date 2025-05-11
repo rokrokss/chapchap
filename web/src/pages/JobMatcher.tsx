@@ -48,6 +48,7 @@ const JobMatcher = () => {
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [matchedJobsLoading, setMatchedJobsLoading] = useState(false);
   const [coverLetterLoading, setCoverLetterLoading] = useState(false);
+  const [coverLetterButtonClicked, setCoverLetterButtonClicked] = useState(false);
 
   const animatedText = useAnimatedText(summary);
   const animatedCoverLetter = useAnimatedText(coverLetter);
@@ -121,6 +122,7 @@ const JobMatcher = () => {
 
   const onClickGenerateCoverLetter = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
+    setCoverLetterButtonClicked(true);
     if (selectedJobId === '') return;
     console.log('generate cover letter: ', selectedJobId);
     setCoverLetter('');
@@ -226,7 +228,9 @@ const JobMatcher = () => {
                   className="mt-2 p-4 border rounded-md text-sm"
                   style={{ whiteSpace: 'pre-wrap' }}
                 >
-                  {animatedCoverLetter || <Loader2 className="w-4 h-4 animate-spin" />}
+                  {(coverLetterButtonClicked ? animatedCoverLetter : coverLetter) || (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  )}
                 </div>
               </div>
             ) : null}
