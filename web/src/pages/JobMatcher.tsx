@@ -65,7 +65,6 @@ const JobMatcher = () => {
 
   const getMatchedJobs = async () => {
     const matchJob = await fetchMatchJob();
-    console.log(matchJob);
     setMatchedJobs(matchJob);
     setMatchedJobsLoading(false);
   };
@@ -84,12 +83,16 @@ const JobMatcher = () => {
     setAccordionOpen(accordianOpen === id ? '' : id);
   };
 
+  const onClickTag = (event: React.MouseEvent<HTMLButtonElement>, _: string) => {
+    event.stopPropagation();
+  };
+
   return (
     <div className="w-full max-w-3xl mx-auto px-6">
       <div className="w-full max-w-3xl mx-auto">
         <Form {...form}>
-          <Label className="mb-3 mt-2">
-            이력서 분석 {'>'} 공고 매칭 {'>'} 스킬갭 분석 {'>'} AI커버레터
+          <Label className="mb-3 mt-2 font-bold">
+            이력서 분석 {'>'} 공고 매칭 {'>'} AI커버레터
           </Label>
           <FormDescription className="mb-1">
             PDF 형식의 이력서를 분석할 수 있습니다. 이력서와 분석 결과는 서버에 보관되지 않습니다.
@@ -119,7 +122,7 @@ const JobMatcher = () => {
         </Form>
         {summary || summaryLoading ? (
           <div className="mt-4">
-            <Label>이력서 요약</Label>
+            <Label className="font-bold">이력서 요약</Label>
             <div className="mt-2 p-4 border rounded-md text-sm" style={{ whiteSpace: 'pre-wrap' }}>
               {(resumeUploaded ? animatedText : summary) || (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -129,7 +132,7 @@ const JobMatcher = () => {
         ) : null}
         {matchedJobs.length > 0 || matchedJobsLoading ? (
           <div className="mt-4">
-            <Label>공고 매칭</Label>
+            <Label className="font-bold">추천 채용공고 (적합도순)</Label>
             <Accordion
               type="single"
               collapsible
@@ -144,8 +147,8 @@ const JobMatcher = () => {
                   selectedCompanies={[]}
                   selectedTags={[]}
                   onClickAccordion={onClickAccordion}
-                  onClickCompany={() => null}
-                  onClickTag={() => null}
+                  onClickCompany={onClickTag}
+                  onClickTag={onClickTag}
                 />
               ))}
               {matchedJobsLoading ? <Loader2 className="mt-5 ml-4 w-4 h-4 animate-spin" /> : null}

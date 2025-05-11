@@ -113,6 +113,10 @@ class Settings:
         self.OPENAI_EMBEDDING_MODEL = os.getenv(
             "OPENAI_EMBEDDING_MODEL", "text-embedding-3-small"
         )
+        self.DONE_TOKEN = "[[DONE]]"
+
+        self.RETRIEVAL_COUNT = int(os.getenv("RETRIEVAL_COUNT", "10"))
+        self.RERANK_COUNT = int(os.getenv("RERANK_COUNT", "10"))
 
 
 # Create settings instance

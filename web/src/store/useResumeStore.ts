@@ -18,6 +18,7 @@ export type Job = {
   is_active: boolean;
   tags: string[];
   cosine_similarity: number;
+  reason: string;
 };
 
 interface ResumeStoreType {

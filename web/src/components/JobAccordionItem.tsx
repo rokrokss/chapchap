@@ -1,25 +1,7 @@
 import React from 'react';
 import { AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
-
-type Job = {
-  id: string;
-  job_title: string;
-  company_name: string;
-  affiliate_company_name: string;
-  link: string;
-  team_info: string;
-  responsibilities: string[];
-  qualifications: string[];
-  preferred_qualifications: string[];
-  hiring_process: string[];
-  additional_info: string[];
-  uploaded_date: string;
-  created_at: string;
-  updated_at: string;
-  is_active: boolean;
-  tags: string[];
-};
+import { Job } from '@/store/useResumeStore';
 
 type Props = {
   job: Job;
@@ -44,6 +26,7 @@ const JobAccordionItem = ({
         <div>{`${job.job_title} @ ${job.company_name}`}</div>
       </AccordionTrigger>
       <div onClick={() => onClickAccordion(`${job.id}`)}>
+        {job.reason ? <div className="mb-4 text-sm">"{job.reason}"</div> : null}
         <div className="mb-4">
           <Button
             variant={selectedCompanies.includes(job.company_name) ? 'default' : 'outline'}
