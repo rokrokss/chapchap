@@ -87,6 +87,14 @@ const JobMatcher = () => {
     event.stopPropagation();
   };
 
+  const onClickGenerateCoverLetter = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    job_id: string
+  ) => {
+    event.stopPropagation();
+    console.log('generate cover letter', job_id);
+  };
+
   return (
     <div className="w-full max-w-3xl mx-auto px-6">
       <div className="w-full max-w-3xl mx-auto">
@@ -140,15 +148,18 @@ const JobMatcher = () => {
               value={accordianOpen}
               onValueChange={setAccordionOpen}
             >
-              {matchedJobs.map(job => (
+              {matchedJobs.map((job, index) => (
                 <JobAccordionItem
                   key={job.id}
                   job={job}
+                  index={index}
                   selectedCompanies={[]}
                   selectedTags={[]}
+                  showGenerateCoverLetterButton={true}
                   onClickAccordion={onClickAccordion}
                   onClickCompany={onClickTag}
                   onClickTag={onClickTag}
+                  onClickGenerateCoverLetter={onClickGenerateCoverLetter}
                 />
               ))}
               {matchedJobsLoading ? <Loader2 className="mt-5 ml-4 w-4 h-4 animate-spin" /> : null}

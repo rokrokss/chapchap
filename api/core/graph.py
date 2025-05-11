@@ -200,10 +200,13 @@ class LangGraphAgent:
         for row in sentence_rows:
             qualifications_map[row["job_id"]][row["type"]].append(row["sentence"])
 
+        named_company_experiences = state["named_company_experiences"]
         results = []
         for job in job_rows:
             job_dict = dict(job)
             job_id = job_dict["id"]
+            if job_id in named_company_experiences:
+                continue
             job_dict["qualifications"] = qualifications_map[job_id]["required"]
             job_dict["preferred_qualifications"] = qualifications_map[job_id][
                 "preferred"
