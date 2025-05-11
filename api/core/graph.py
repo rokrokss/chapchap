@@ -284,7 +284,6 @@ class LangGraphAgent:
             conninfo=str(settings.POSTGRES_URL),
             open=False,
             max_size=settings.LLM_DB_POOL_SIZE,
-            max_lifetime=60 * 5,
             kwargs={
                 "autocommit": True,
                 "prepare_threshold": None,
