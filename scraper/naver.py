@@ -11,7 +11,7 @@ from datetime import datetime, date
 import psycopg
 
 # --- 기본 설정 ---
-load_dotenv(dotenv_path=".env.local")
+load_dotenv(dotenv_path=".env.production")
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 
 # --- 상수 ---
@@ -246,6 +246,9 @@ def main():
 
             with psycopg.connect(**DB_CONFIG) as conn:
                 with conn.cursor() as cur:
+                    cur.execute(
+                        f"SET search_path TO {os.getenv('DB_SCHEMA', 'chapchap')}"
+                    )
                     # 회사 ID 가져오기 또는 삽입
                     cur.execute(
                         "SELECT id FROM companies WHERE name = %s",

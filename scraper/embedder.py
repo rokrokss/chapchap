@@ -7,7 +7,7 @@ import numpy as np
 from typing import List, Dict
 from collections import defaultdict
 
-load_dotenv(dotenv_path=".env.local")
+load_dotenv(dotenv_path=".env.production")
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 
 DB_CONFIG = {
@@ -50,6 +50,7 @@ def embed_and_store_sentences():
 
         total_jobs = len(job_sentences)
         with conn.cursor() as cur:
+            cur.execute(f"SET search_path TO {os.getenv('DB_SCHEMA', 'chapchap')}")
             for i, (job_id, sentence_rows) in enumerate(job_sentences.items(), 1):
                 try:
                     logging.info(f"▶️ ({i}/{total_jobs}) {job_id} 임베딩 시작")

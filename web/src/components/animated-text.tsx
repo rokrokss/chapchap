@@ -16,7 +16,7 @@ export function useAnimatedText(text: string) {
   useEffect(() => {
     const controls = animate(startingCursor, text.split(delimiter).length, {
       // Tweak the animation here
-      duration: 2,
+      duration: 4,
       ease: 'easeOut',
       onUpdate(latest) {
         setCursor(Math.floor(latest));

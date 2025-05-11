@@ -1,5 +1,4 @@
 CREATE SCHEMA IF NOT EXISTS chapchap;
-CREATE EXTENSION IF NOT EXISTS vector;
 
 CREATE TABLE chapchap.companies (
     id SERIAL PRIMARY KEY,
@@ -216,3 +215,5 @@ CREATE POLICY "Allow authenticated users to delete" ON chapchap.job_embeddings
     FOR DELETE
     TO authenticated
     USING (true);
+
+ALTER ROLE postgres SET search_path TO chapchap;

@@ -3,7 +3,7 @@ import logging
 from dotenv import load_dotenv
 import psycopg
 
-load_dotenv(dotenv_path=".env.local")
+load_dotenv(dotenv_path=".env.production")
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 
 DB_CONFIG = {
@@ -19,6 +19,7 @@ DB_CONFIG = {
 def drop_vector_index():
     with psycopg.connect(**DB_CONFIG) as conn:
         with conn.cursor() as cur:
+            cur.execute(f"SET search_path TO {os.getenv('DB_SCHEMA', 'chapchap')}")
             cur.execute(
                 "DROP INDEX IF EXISTS idx_job_qualification_sentences_embedding"
             )

@@ -138,7 +138,7 @@ class LangGraphAgent:
                     """
                         SELECT
                             job_id, embedding <=> %s::vector AS distance
-                        FROM job_embeddings
+                        FROM chapchap.job_embeddings
                         ORDER BY distance
                         LIMIT %s
                     """,
@@ -159,11 +159,11 @@ class LangGraphAgent:
                         c.name AS company_name,
                         ac.name AS affiliate_company_name,
                         ARRAY_REMOVE(ARRAY_AGG(t.name), NULL) AS tags
-                    FROM job_info j
-                    JOIN companies c ON j.company_id = c.id 
-                    JOIN affiliate_companies ac ON j.affiliate_company_id = ac.id
-                    LEFT JOIN job_tags jt ON j.id = jt.job_id
-                    LEFT JOIN tags t ON jt.tag_id = t.id
+                    FROM chapchap.job_info j
+                    JOIN chapchap.companies c ON j.company_id = c.id 
+                    JOIN chapchap.affiliate_companies ac ON j.affiliate_company_id = ac.id
+                    LEFT JOIN chapchap.job_tags jt ON j.id = jt.job_id
+                    LEFT JOIN chapchap.tags t ON jt.tag_id = t.id
                     WHERE j.id = ANY(%s)
                     GROUP BY j.id, c.name, ac.name
                     """,
@@ -208,7 +208,6 @@ class LangGraphAgent:
         messages = [HumanMessage(content=prompt)]
         structured_llm = self.model.with_structured_output(RerankedJobList)
         rerank_output = await structured_llm.ainvoke(messages)
-        self.logger.info(f"Reranked output: {rerank_output}")
 
         result = []
         for job in rerank_output.results:
@@ -230,9 +229,9 @@ class LangGraphAgent:
                             j.*,
                             c.name AS company_name,
                             ac.name AS affiliate_company_name
-                        FROM job_info j
-                        JOIN companies c ON j.company_id = c.id 
-                        JOIN affiliate_companies ac ON j.affiliate_company_id = ac.id
+                        FROM chapchap.job_info j
+                        JOIN chapchap.companies c ON j.company_id = c.id 
+                        JOIN chapchap.affiliate_companies ac ON j.affiliate_company_id = ac.id
                         WHERE j.id = %s
                     """,
                     (job_id,),
@@ -287,6 +286,7 @@ class LangGraphAgent:
             max_size=settings.LLM_DB_POOL_SIZE,
             kwargs={
                 "autocommit": True,
+                "prepare_threshold": None,
                 "options": f"-c search_path={settings.POSTGRES_SCHEMA}",
             },
         )
@@ -320,12 +320,14 @@ class LangGraphAgent:
                 for table in settings.CHECKPOINT_TABLES:
                     await cur.execute(
                         f"""
-                        DELETE FROM {table}
+                        DELETE FROM chapchap.{table}
                         WHERE thread_id = %s
                         """,
                         (session_id,),
                     )
-                    self.logger.info(f"Cleared {table} for session {session_id}")
+                    self.logger.info(
+                        f"Cleared chapchap.{table} for session {session_id}"
+                    )
 
     async def close(self):
         await self._db_pool.close()

@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from typing import List
 import psycopg
 
-load_dotenv(dotenv_path=".env.local")
+load_dotenv(dotenv_path=".env.production")
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 
 DB_CONFIG = {
@@ -148,6 +148,7 @@ def main():
         ]
 
         with conn.cursor() as cur:
+            cur.execute(f"SET search_path TO {os.getenv('DB_SCHEMA', 'chapchap')}")
             # 태그 테이블에 모든 태그 삽입
             for tag in all_tags:
                 cur.execute(

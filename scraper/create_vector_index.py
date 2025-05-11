@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import psycopg
 from pgvector.psycopg import register_vector
 
-load_dotenv(dotenv_path=".env.local")
+load_dotenv(dotenv_path=".env.production")
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 
 DB_CONFIG = {
@@ -20,6 +20,7 @@ DB_CONFIG = {
 def create_vector_index():
     with psycopg.connect(**DB_CONFIG) as conn:
         with conn.cursor() as cur:
+            cur.execute(f"SET search_path TO {os.getenv('DB_SCHEMA', 'chapchap')}")
             cur.execute("CREATE EXTENSION IF NOT EXISTS vector;")
             cur.execute("ALTER EXTENSION vector SET SCHEMA chapchap;")
             register_vector(conn)

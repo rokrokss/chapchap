@@ -16,11 +16,11 @@ async def get_all_active_job_info(
         c.name AS company_name,
         ac.name AS affiliate_company_name,
         ARRAY_REMOVE(ARRAY_AGG(t.name), NULL) AS tags
-        FROM job_info j
-        JOIN companies c ON j.company_id = c.id
-        JOIN affiliate_companies ac ON j.affiliate_company_id = ac.id
-        LEFT JOIN job_tags jt ON j.id = jt.job_id
-        LEFT JOIN tags t ON jt.tag_id = t.id
+        FROM chapchap.job_info j
+        JOIN chapchap.companies c ON j.company_id = c.id
+        JOIN chapchap.affiliate_companies ac ON j.affiliate_company_id = ac.id
+        LEFT JOIN chapchap.job_tags jt ON j.id = jt.job_id
+        LEFT JOIN chapchap.tags t ON jt.tag_id = t.id
         WHERE j.is_active = true
         GROUP BY j.id, c.name, ac.name
         ORDER BY j.uploaded_date DESC;
