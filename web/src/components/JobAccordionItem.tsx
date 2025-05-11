@@ -8,11 +8,9 @@ type Props = {
   index: number;
   selectedCompanies: string[];
   selectedTags: string[];
-  showGenerateCoverLetterButton: boolean;
   onClickAccordion: (id: string) => void;
   onClickCompany: (e: React.MouseEvent<HTMLButtonElement>, companyName: string) => void;
   onClickTag: (e: React.MouseEvent<HTMLButtonElement>, tag: string) => void;
-  onClickGenerateCoverLetter: (e: React.MouseEvent<HTMLButtonElement>, id: string) => void;
 };
 
 const JobAccordionItem = ({
@@ -20,11 +18,9 @@ const JobAccordionItem = ({
   index,
   selectedCompanies,
   selectedTags,
-  showGenerateCoverLetterButton,
   onClickAccordion,
   onClickCompany,
   onClickTag,
-  onClickGenerateCoverLetter,
 }: Props) => {
   return (
     <AccordionItem key={job.id} value={job.id}>
@@ -33,49 +29,38 @@ const JobAccordionItem = ({
       </AccordionTrigger>
       <div onClick={() => onClickAccordion(`${job.id}`)}>
         {job.reason ? <div className="mb-4 text-sm italic">"{job.reason}"</div> : null}
-        <div className="flex w-full items-center gap-0 mb-4">
-          <div className="w-full">
+        <div className="mb-4">
+          <Button
+            variant={selectedCompanies.includes(job.company_name) ? 'default' : 'outline'}
+            size="xs"
+            className="mr-1 duration-0"
+            onClick={e => onClickCompany(e, job.company_name)}
+          >
+            {job.company_name}
+          </Button>
+          {job.affiliate_company_name !== job.company_name && (
             <Button
-              variant={selectedCompanies.includes(job.company_name) ? 'default' : 'outline'}
+              variant={
+                selectedCompanies.includes(job.affiliate_company_name) ? 'default' : 'outline'
+              }
               size="xs"
               className="mr-1 duration-0"
-              onClick={e => onClickCompany(e, job.company_name)}
+              onClick={e => onClickCompany(e, job.affiliate_company_name)}
             >
-              {job.company_name}
+              {job.affiliate_company_name}
             </Button>
-            {job.affiliate_company_name !== job.company_name && (
-              <Button
-                variant={
-                  selectedCompanies.includes(job.affiliate_company_name) ? 'default' : 'outline'
-                }
-                size="xs"
-                className="mr-1 duration-0"
-                onClick={e => onClickCompany(e, job.affiliate_company_name)}
-              >
-                {job.affiliate_company_name}
-              </Button>
-            )}
-            {job.tags.map(tag => (
-              <Button
-                key={tag}
-                variant={selectedTags.includes(tag) ? 'default' : 'outline'}
-                size="xs"
-                className="mr-1 duration-0"
-                onClick={e => onClickTag(e, tag)}
-              >
-                {tag}
-              </Button>
-            ))}
-          </div>
-          {showGenerateCoverLetterButton ? (
+          )}
+          {job.tags.map(tag => (
             <Button
-              className="mr-4 duration-0 cursor-pointer"
+              key={tag}
+              variant={selectedTags.includes(tag) ? 'default' : 'outline'}
               size="xs"
-              onClick={e => onClickGenerateCoverLetter(e, job.id)}
+              className="mr-1 duration-0"
+              onClick={e => onClickTag(e, tag)}
             >
-              커버레터 생성
+              {tag}
             </Button>
-          ) : null}
+          ))}
         </div>
       </div>
       <AccordionContent>

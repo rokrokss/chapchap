@@ -19,6 +19,15 @@ import { useAnimatedText } from '@/components/animated-text';
 import useResumeStore from '@/store/useResumeStore';
 import { Accordion } from '@/components/ui/accordion';
 import JobAccordionItem from '@/components/JobAccordionItem';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const formSchema = z.object({
   resume: z.custom<File>(file => file instanceof File && file.type === 'application/pdf', {
@@ -139,31 +148,53 @@ const JobMatcher = () => {
           </div>
         ) : null}
         {matchedJobs.length > 0 || matchedJobsLoading ? (
-          <div className="mt-4">
-            <Label className="font-bold">추천 채용공고 (적합도순)</Label>
-            <Accordion
-              type="single"
-              collapsible
-              className="w-full max-w-3xl mx-auto mb-5"
-              value={accordianOpen}
-              onValueChange={setAccordionOpen}
-            >
-              {matchedJobs.map((job, index) => (
-                <JobAccordionItem
-                  key={job.id}
-                  job={job}
-                  index={index}
-                  selectedCompanies={[]}
-                  selectedTags={[]}
-                  showGenerateCoverLetterButton={true}
-                  onClickAccordion={onClickAccordion}
-                  onClickCompany={onClickTag}
-                  onClickTag={onClickTag}
-                  onClickGenerateCoverLetter={onClickGenerateCoverLetter}
-                />
-              ))}
-              {matchedJobsLoading ? <Loader2 className="mt-5 ml-4 w-4 h-4 animate-spin" /> : null}
-            </Accordion>
+          <div>
+            <div className="mt-4 mb-5">
+              <Label className="font-bold mb-2">커버레터 생성</Label>
+              <div className="flex items-center gap-2">
+                <Select>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={matchedJobs.length > 0 ? '추천공고' : '로딩 중...'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {matchedJobs.map((job, index) => (
+                        <SelectItem key={job.id} value={job.id}>
+                          {job.job_title} @ {job.company_name}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                <Button type="submit" className="self-start" disabled={summaryLoading}>
+                  {summaryLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : '커버레터 생성'}
+                </Button>
+              </div>
+            </div>
+            <div className="mt-4">
+              <Label className="font-bold">추천 채용공고 (적합도순)</Label>
+              <Accordion
+                type="single"
+                collapsible
+                className="w-full max-w-3xl mx-auto mb-5"
+                value={accordianOpen}
+                onValueChange={setAccordionOpen}
+              >
+                {matchedJobs.map((job, index) => (
+                  <JobAccordionItem
+                    key={job.id}
+                    job={job}
+                    index={index}
+                    selectedCompanies={[]}
+                    selectedTags={[]}
+                    onClickAccordion={onClickAccordion}
+                    onClickCompany={onClickTag}
+                    onClickTag={onClickTag}
+                  />
+                ))}
+                {matchedJobsLoading ? <Loader2 className="mt-5 ml-4 w-4 h-4 animate-spin" /> : null}
+              </Accordion>
+            </div>
           </div>
         ) : null}
       </div>

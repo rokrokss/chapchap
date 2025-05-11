@@ -130,11 +130,9 @@ const JobList = () => {
             index={index}
             selectedCompanies={selectedCompanies}
             selectedTags={selectedTags}
-            showGenerateCoverLetterButton={false}
             onClickAccordion={onClickAccordion}
             onClickCompany={onClickCompany}
             onClickTag={onClickTag}
-            onClickGenerateCoverLetter={() => null}
           />
         ))}
         {loading ? <div>loading...</div> : null}
