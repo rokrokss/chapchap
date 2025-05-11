@@ -40,10 +40,18 @@ const formSchema = z.object({
 
 const JobMatcher = () => {
   const [resumeUploaded, setResumeUploaded] = useState(false);
-  const [selectedJobId, setSelectedJobId] = useState('');
-  const [selectedJobName, setSelectedJobName] = useState('');
-  const { summary, matchedJobs, coverLetter, setSummary, setMatchedJobs, setCoverLetter } =
-    useResumeStore();
+  const {
+    summary,
+    matchedJobs,
+    coverLetter,
+    selectedJobId,
+    selectedJobName,
+    setSummary,
+    setMatchedJobs,
+    setCoverLetter,
+    setSelectedJobId,
+    setSelectedJobName,
+  } = useResumeStore();
 
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [matchedJobsLoading, setMatchedJobsLoading] = useState(false);
@@ -193,7 +201,7 @@ const JobMatcher = () => {
             <div className="mt-4 mb-5">
               <Label className="font-bold mb-2">커버레터 생성</Label>
               <div className="flex items-center gap-2">
-                <Select onValueChange={onClickJobSelectItem}>
+                <Select value={selectedJobId} onValueChange={onClickJobSelectItem}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder={matchedJobs.length > 0 ? '추천공고' : '로딩 중...'} />
                   </SelectTrigger>

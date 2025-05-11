@@ -28,6 +28,10 @@ interface ResumeStoreType {
   setMatchedJobs: (jobs: Job[]) => void;
   coverLetter: string;
   setCoverLetter: (coverLetter: string) => void;
+  selectedJobId: string;
+  setSelectedJobId: (selectedJobId: string) => void;
+  selectedJobName: string;
+  setSelectedJobName: (selectedJobName: string) => void;
 }
 
 const useResumeStore = create<ResumeStoreType>()(set => ({
@@ -37,6 +41,10 @@ const useResumeStore = create<ResumeStoreType>()(set => ({
   setMatchedJobs: (jobs: Job[]) => set({ matchedJobs: jobs }),
   coverLetter: '',
   setCoverLetter: (coverLetter: string) => set({ coverLetter }),
+  selectedJobId: '',
+  setSelectedJobId: (selectedJobId: string) => set({ selectedJobId }),
+  selectedJobName: '',
+  setSelectedJobName: (selectedJobName: string) => set({ selectedJobName }),
 }));
 
 export default useResumeStore;
