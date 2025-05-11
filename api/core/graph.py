@@ -284,6 +284,8 @@ class LangGraphAgent:
             conninfo=str(settings.POSTGRES_URL),
             open=False,
             max_size=settings.LLM_DB_POOL_SIZE,
+            max_lifetime=settings.POSTGRES_CONNECTION_MAX_LIFETIME,
+            max_idle=settings.POSTGRES_CONNECTION_MAX_IDLE,
             kwargs={
                 "autocommit": True,
                 "prepare_threshold": None,
@@ -291,6 +293,12 @@ class LangGraphAgent:
             },
         )
         await self._db_pool.open(wait=True)
+        self.logger.info(
+            "llm_db_pool_created",
+            max_size=settings.LLM_DB_POOL_SIZE,
+            max_lifetime=settings.POSTGRES_CONNECTION_MAX_LIFETIME,
+            max_idle=settings.POSTGRES_CONNECTION_MAX_IDLE,
+        )
         return self._db_pool
 
     async def _create_graph(self):

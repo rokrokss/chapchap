@@ -97,6 +97,12 @@ class Settings:
         )
         self.POSTGRES_POOL_SIZE = int(os.getenv("POSTGRES_POOL_SIZE", "20"))
         self.POSTGRES_SCHEMA = os.getenv("POSTGRES_SCHEMA", "chapchap")
+        self.POSTGRES_CONNECTION_MAX_LIFETIME = int(
+            os.getenv("POSTGRES_CONNECTION_MAX_LIFETIME", "300")
+        )
+        self.POSTGRES_CONNECTION_MAX_IDLE = int(
+            os.getenv("POSTGRES_CONNECTION_MAX_IDLE", "120")
+        )
 
         # LLM Settings
         self.LLM_MODEL = os.getenv("LLM_MODEL", "google_genai:gemini-2.0-flash")

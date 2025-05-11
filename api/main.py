@@ -23,13 +23,21 @@ async def lifespan(app: FastAPI):
         conninfo=str(settings.POSTGRES_URL),
         open=False,
         max_size=settings.POSTGRES_POOL_SIZE,
+        max_lifetime=settings.POSTGRES_CONNECTION_MAX_LIFETIME,
+        max_idle=settings.POSTGRES_CONNECTION_MAX_IDLE,
         kwargs={
             "prepare_threshold": None,
             "options": f"-c search_path={settings.POSTGRES_SCHEMA}",
         },
     )
     await app.state.db_pool.open(wait=True)
-
+    logger = structlog.stdlib.get_logger("api.access")
+    logger.info(
+        "app_db_pool_created",
+        max_size=settings.POSTGRES_POOL_SIZE,
+        max_lifetime=settings.POSTGRES_CONNECTION_MAX_LIFETIME,
+        max_idle=settings.POSTGRES_CONNECTION_MAX_IDLE,
+    )
     app.state.agent = await LangGraphAgent.create()
     yield
     await app.state.db_pool.close()
