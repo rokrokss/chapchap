@@ -1,5 +1,5 @@
 import os
-from fastapi import APIRouter, Request, File, UploadFile, BackgroundTasks
+from fastapi import APIRouter, Request, File, UploadFile, BackgroundTasks, Header
 from langchain_community.document_loaders import PyMuPDFLoader
 import structlog
 from tempfile import NamedTemporaryFile
@@ -9,6 +9,7 @@ from fastapi.responses import StreamingResponse
 from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
 from core.config import settings
+import json
 
 router = APIRouter()
 
@@ -82,7 +83,9 @@ async def analyze_resume(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
 ):
-    session_id = request.cookies.get("session_id")
+    session_id = request.headers.get("X-Session-Id")
+    logger = structlog.get_logger("api.resume.analyze")
+    logger.info("analyze_resume", session_id=session_id)
 
     with NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
         tmp.write(await file.read())
@@ -106,19 +109,22 @@ async def analyze_resume(
     messages = agent.resume_summary_messages(full_text)
 
     async def generate_response():
-        chunks = []
-        async for chunk in agent.stream_resume_summary(
-            messages, full_text, named_company_experiences, session_id
-        ):
-            if chunk == settings.DONE_TOKEN:
-                chunk = ""
-                await update_agent_state(
-                    "".join(chunks),
-                    agent,
-                    session_id,
-                )
-            chunks.append(chunk)
-            yield f'{{"chunk": "{chunk}", "session_id": "{session_id}"}}'
+        try:
+            chunks = []
+            async for chunk in agent.stream_resume_summary(
+                messages, full_text, named_company_experiences, session_id
+            ):
+                if chunk == settings.DONE_TOKEN:
+                    chunk = ""
+                    await update_agent_state(
+                        "".join(chunks),
+                        agent,
+                        session_id,
+                    )
+                chunks.append(chunk)
+                yield f'{{"chunk": "{chunk}", "session_id": "{session_id}"}}'
+        except Exception as e:
+            yield json.dumps({"error": str(e)})
 
     return StreamingResponse(generate_response(), media_type="application/json")
 
@@ -127,7 +133,7 @@ async def analyze_resume(
 async def analyze_resume_raw(
     request: Request,
 ):
-    session_id = request.cookies.get("session_id")
+    session_id = request.headers.get("X-Session-Id")
     body = await request.json()
     raw_resume = body["resume"]
 
@@ -144,26 +150,29 @@ async def analyze_resume_raw(
     messages = agent.resume_summary_messages(full_text)
 
     async def generate_response():
-        chunks = []
-        async for chunk in agent.stream_resume_summary(
-            messages, full_text, named_company_experiences, session_id
-        ):
-            if chunk == settings.DONE_TOKEN:
-                chunk = ""
-                await update_agent_state(
-                    "".join(chunks),
-                    agent,
-                    session_id,
-                )
-            chunks.append(chunk)
-            yield f'{{"chunk": "{chunk}", "session_id": "{session_id}"}}'
+        try:
+            chunks = []
+            async for chunk in agent.stream_resume_summary(
+                messages, full_text, named_company_experiences, session_id
+            ):
+                if chunk == settings.DONE_TOKEN:
+                    chunk = ""
+                    await update_agent_state(
+                        "".join(chunks),
+                        agent,
+                        session_id,
+                    )
+                chunks.append(chunk)
+                yield f'{{"chunk": "{chunk}", "session_id": "{session_id}"}}'
+        except Exception as e:
+            yield json.dumps({"error": str(e)})
 
     return StreamingResponse(generate_response(), media_type="application/json")
 
 
 @router.get("/match_job", response_model=List[Any])
 async def match_job(request: Request):
-    session_id = request.cookies.get("session_id")
+    session_id = request.headers.get("X-Session-Id")
     agent: LangGraphAgent = request.app.state.agent
     agent_thread_config = {"configurable": {"thread_id": session_id}}
     state = await agent.graph.ainvoke(None, agent_thread_config)
@@ -177,7 +186,7 @@ async def match_job(request: Request):
 @router.get("/generate_cover_letter/{job_id}", response_model=dict)
 async def generate_cover_letter(request: Request, job_id: str):
     logger = structlog.get_logger("api.resume.generate_cover_letter")
-    session_id = request.cookies.get("session_id")
+    session_id = request.headers.get("X-Session-Id")
     agent: LangGraphAgent = request.app.state.agent
     agent_thread_config = {"configurable": {"thread_id": session_id}}
     logger.info("generate_cover_letter", job_id=job_id)

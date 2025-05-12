@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useNavigate } from 'react-router-dom';
-
+import useSessionStore from '@/store/useSessionStore';
 const textFormSchema = z.object({
   resumeText: z
     .string()
@@ -52,6 +52,7 @@ const JobMatcherText = () => {
     setPdfMode,
     setResumeText,
   } = useResumeStore();
+  const { sessionId } = useSessionStore();
 
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [matchedJobsLoading, setMatchedJobsLoading] = useState(false);
@@ -71,7 +72,7 @@ const JobMatcherText = () => {
 
   const getResumeSummaryText = async (values: z.infer<typeof textFormSchema>) => {
     const resume = values.resumeText;
-    const reader = await fetchAnalyzeResumeStreamByText(resume);
+    const reader = await fetchAnalyzeResumeStreamByText(resume, sessionId);
     const decoder = new TextDecoder('utf-8');
     if (!reader) return;
     while (true) {
@@ -87,7 +88,7 @@ const JobMatcherText = () => {
   };
 
   const getMatchedJobs = async () => {
-    const matchJob = await fetchMatchJob();
+    const matchJob = await fetchMatchJob(sessionId);
     setMatchedJobs(matchJob);
     setMatchedJobsLoading(false);
   };
@@ -135,7 +136,7 @@ const JobMatcherText = () => {
     console.log('generate cover letter: ', selectedJobId);
     setCoverLetter('');
     setCoverLetterLoading(true);
-    const reader = await fetchGenerateCoverLetter(selectedJobId);
+    const reader = await fetchGenerateCoverLetter(selectedJobId, sessionId);
     const decoder = new TextDecoder('utf-8');
 
     if (!reader) return;

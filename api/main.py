@@ -86,24 +86,6 @@ async def logging_middleware(request: Request, call_next) -> Response:
         return response
 
 
-@app.middleware("http")
-async def assign_session_id(request: Request, call_next) -> Response:
-    session_id = request.cookies.get("session_id")
-    if not session_id:
-        session_id = str(uuid.uuid4())
-        response = await call_next(request)
-        response.set_cookie(
-            key="session_id",
-            value=session_id,
-            httponly=True,
-            samesite="None",
-            max_age=60 * 60 * 24 * 30,
-            secure=True,
-        )
-        return response
-    return await call_next(request)
-
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,

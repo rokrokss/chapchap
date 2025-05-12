@@ -14,6 +14,7 @@ import {
 import { Loader2 } from 'lucide-react';
 import { useAnimatedText } from '@/components/animated-text';
 import useResumeStore from '@/store/useResumeStore';
+import useSessionStore from '@/store/useSessionStore';
 import { Accordion } from '@/components/ui/accordion';
 import JobAccordionItem from '@/components/JobAccordionItem';
 import {
@@ -49,7 +50,7 @@ const JobMatcher = () => {
     setSelectedJobName,
     setPdfMode,
   } = useResumeStore();
-
+  const { sessionId } = useSessionStore();
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [matchedJobsLoading, setMatchedJobsLoading] = useState(false);
   const [coverLetterLoading, setCoverLetterLoading] = useState(false);
@@ -67,7 +68,7 @@ const JobMatcher = () => {
   });
 
   const getResumeSummaryPdf = async (values: z.infer<typeof pdfFormSchema>) => {
-    const reader = await fetchAnalyzeResumeStream(values.resumePdf);
+    const reader = await fetchAnalyzeResumeStream(values.resumePdf, sessionId);
     const decoder = new TextDecoder('utf-8');
     if (!reader) return;
     while (true) {
@@ -83,7 +84,7 @@ const JobMatcher = () => {
   };
 
   const getMatchedJobs = async () => {
-    const matchJob = await fetchMatchJob();
+    const matchJob = await fetchMatchJob(sessionId);
     setMatchedJobs(matchJob);
     setMatchedJobsLoading(false);
   };
@@ -131,7 +132,7 @@ const JobMatcher = () => {
     console.log('generate cover letter: ', selectedJobId);
     setCoverLetter('');
     setCoverLetterLoading(true);
-    const reader = await fetchGenerateCoverLetter(selectedJobId);
+    const reader = await fetchGenerateCoverLetter(selectedJobId, sessionId);
     const decoder = new TextDecoder('utf-8');
 
     if (!reader) return;
