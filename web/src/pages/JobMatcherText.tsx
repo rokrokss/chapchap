@@ -224,11 +224,11 @@ const JobMatcherText = () => {
         ) : null}
         {matchedJobs.length > 0 || matchedJobsLoading ? (
           <div>
-            <div className="mt-4 mb-5">
+            <div className="w-full max-w-3xl mt-4 mb-5">
               <Label className="font-bold mb-2">커버레터 생성</Label>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center w-full max-w-3xl gap-2">
                 <Select value={selectedJobId} onValueChange={onClickJobSelectItem}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full truncate">
                     <SelectValue placeholder={matchedJobs.length > 0 ? '추천공고' : '로딩 중...'} />
                   </SelectTrigger>
                   <SelectContent>
