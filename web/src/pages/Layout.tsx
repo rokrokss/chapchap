@@ -33,7 +33,7 @@ const Layout = () => {
               <NavigationMenuItem>
                 <NavigationMenuLink
                   className={
-                    location.pathname === '/match'
+                    location.pathname === '/match' || location.pathname === '/match-text'
                       ? 'font-bold text-accent-foreground bg-accent/50 bg-accent'
                       : ''
                   }
