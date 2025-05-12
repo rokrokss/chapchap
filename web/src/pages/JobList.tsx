@@ -96,7 +96,7 @@ const JobList = () => {
           <Button
             key={company.company_name}
             variant={selectedCompanies.includes(company.company_name) ? 'default' : 'outline'}
-            size="xs"
+            size="ss"
             className="mr-1.5 duration-0 mt-1.5"
             onClick={e => onClickCompany(e, company.company_name)}
           >
@@ -107,7 +107,7 @@ const JobList = () => {
           <Button
             key={tag.tag_name}
             variant={selectedTags.includes(tag.tag_name) ? 'default' : 'outline'}
-            size="xs"
+            size="ss"
             className="mr-1.5 duration-0 mt-1.5"
             onClick={e => onClickTag(e, tag.tag_name)}
           >
