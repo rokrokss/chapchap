@@ -6,6 +6,7 @@ from langgraph.graph.message import add_messages
 from langgraph.graph.state import CompiledStateGraph
 import structlog
 from typing_extensions import TypedDict
+from langgraph.graph import END
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from psycopg_pool import AsyncConnectionPool
 from pydantic import BaseModel, Field
@@ -42,6 +43,7 @@ class MatchJobState(TypedDict):
     avg_embedding: list[float]
     retrieved_jobs: list[dict]
     reranked_results: list[dict]
+    is_valid_resume: bool
 
 
 class Message(BaseModel):
@@ -122,6 +124,20 @@ class LangGraphAgent:
         return [item.embedding for item in response.data]
 
     # match
+    async def _validate_resume(self, state: MatchJobState) -> dict:
+        summary_sentences = state["summary_sentences"]
+        is_valid_resume = True
+        if len(summary_sentences) == 0:
+            is_valid_resume = False
+        return {
+            "is_valid_resume": is_valid_resume,
+        }
+
+    async def _route_by_resume_validity(self, state: MatchJobState) -> dict:
+        if state["is_valid_resume"]:
+            return "embed_resume"
+        return "end"
+
     async def _embed_resume(self, state: MatchJobState) -> dict:
         embeddings = await self.get_embeddings(state["summary_sentences"])
         avg_embedding = np.mean(embeddings, axis=0).tolist()
@@ -307,19 +323,25 @@ class LangGraphAgent:
 
         graph_builder = StateGraph(MatchJobState)
         graph_builder.add_node("resume_summary", self._resume_summary)
+        graph_builder.add_node("validate_resume", self._validate_resume)
         graph_builder.add_node("embed_resume", self._embed_resume)
         graph_builder.add_node("retrieve_matches", self._retrieve_matches)
         graph_builder.add_node("rerank_matches", self._rerank_matches)
-        graph_builder.add_edge("resume_summary", "embed_resume")
+        graph_builder.add_edge("resume_summary", "validate_resume")
+        graph_builder.add_conditional_edges(
+            "validate_resume",
+            self._route_by_resume_validity,
+            {"embed_resume": "embed_resume", "end": END},
+        )
         graph_builder.add_edge("embed_resume", "retrieve_matches")
         graph_builder.add_edge("retrieve_matches", "rerank_matches")
+        graph_builder.add_edge("rerank_matches", END)
         graph_builder.set_entry_point("resume_summary")
-        graph_builder.set_finish_point("rerank_matches")
 
         self.graph = graph_builder.compile(
             checkpointer=checkpointer,
             name="chapchap_graph",
-            interrupt_before=["embed_resume"],
+            interrupt_before=["validate_resume"],
         )
 
     async def clear_chat_history(self, session_id: str) -> None:

@@ -168,6 +168,9 @@ async def match_job(request: Request):
     agent_thread_config = {"configurable": {"thread_id": session_id}}
     state = await agent.graph.ainvoke(None, agent_thread_config)
 
+    if state["is_valid_resume"] is False:
+        return []
+
     return state["reranked_results"]
 
 
