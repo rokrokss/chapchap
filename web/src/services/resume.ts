@@ -15,6 +15,19 @@ export const fetchAnalyzeResumeStream = async (file: File) => {
   return response.body?.getReader();
 };
 
+export const fetchAnalyzeResumeStreamByText = async (resume: string) => {
+  const response = await fetch(`${API_URL}/resume/analyze_raw`, {
+    method: 'POST',
+    body: JSON.stringify({ resume: resume }),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+  });
+
+  return response.body?.getReader();
+};
+
 export const fetchMatchJob = async () => {
   const response = await axios.get(`${API_URL}/resume/match_job`, {
     withCredentials: true,

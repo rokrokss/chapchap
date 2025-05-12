@@ -123,6 +123,44 @@ async def analyze_resume(
     return StreamingResponse(generate_response(), media_type="application/json")
 
 
+@router.post("/analyze_raw", response_model=dict)
+async def analyze_resume_raw(
+    request: Request,
+):
+    session_id = request.cookies.get("session_id")
+    body = await request.json()
+    raw_resume = body["resume"]
+
+    full_text = raw_resume.lower()
+
+    named_company_experiences = await extract_named_experiences(
+        full_text, request.app.state.db_pool
+    )
+
+    agent: LangGraphAgent = request.app.state.agent
+
+    await agent.clear_chat_history(session_id)
+
+    messages = agent.resume_summary_messages(full_text)
+
+    async def generate_response():
+        chunks = []
+        async for chunk in agent.stream_resume_summary(
+            messages, full_text, named_company_experiences, session_id
+        ):
+            if chunk == settings.DONE_TOKEN:
+                chunk = ""
+                await update_agent_state(
+                    "".join(chunks),
+                    agent,
+                    session_id,
+                )
+            chunks.append(chunk)
+            yield f'{{"chunk": "{chunk}", "session_id": "{session_id}"}}'
+
+    return StreamingResponse(generate_response(), media_type="application/json")
+
+
 @router.get("/match_job", response_model=List[Any])
 async def match_job(request: Request):
     session_id = request.cookies.get("session_id")

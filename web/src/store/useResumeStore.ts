@@ -32,6 +32,10 @@ interface ResumeStoreType {
   setSelectedJobId: (selectedJobId: string) => void;
   selectedJobName: string;
   setSelectedJobName: (selectedJobName: string) => void;
+  pdfMode: boolean;
+  setPdfMode: (pdfMode: boolean) => void;
+  resumeText: string;
+  setResumeText: (resumeText: string) => void;
 }
 
 const useResumeStore = create<ResumeStoreType>()(set => ({
@@ -45,6 +49,10 @@ const useResumeStore = create<ResumeStoreType>()(set => ({
   setSelectedJobId: (selectedJobId: string) => set({ selectedJobId }),
   selectedJobName: '',
   setSelectedJobName: (selectedJobName: string) => set({ selectedJobName }),
+  pdfMode: true,
+  setPdfMode: (pdfMode: boolean) => set({ pdfMode }),
+  resumeText: '',
+  setResumeText: (resumeText: string) => set({ resumeText }),
 }));
 
 export default useResumeStore;

@@ -28,7 +28,7 @@ const JobAccordionItem = ({
         <div>{`${job.reason ? `${index + 1}. ` : ''}${job.job_title} @ ${job.company_name}`}</div>
       </AccordionTrigger>
       <div onClick={() => onClickAccordion(`${job.id}`)}>
-        {job.reason ? <div className="mb-4 text-sm italic">"{job.reason}"</div> : null}
+        {job.reason ? <div className="mb-4 text-sm italic">"{job.reason.trim()}"</div> : null}
         <div className="mb-4">
           <Button
             variant={selectedCompanies.includes(job.company_name) ? 'default' : 'outline'}
