@@ -78,7 +78,7 @@ const JobMatcher = () => {
   const textForm = useForm<z.infer<typeof textFormSchema>>({
     resolver: zodResolver(textFormSchema),
     defaultValues: {
-      resumeText: '',
+      resumeText: resumeText,
     },
   });
 
@@ -254,13 +254,12 @@ const JobMatcher = () => {
               <FormField
                 control={textForm.control}
                 name="resumeText"
-                render={({ field: { value, ...fieldProps } }) => (
+                render={({ field: fieldProps }) => (
                   <FormItem className="w-full">
                     <FormControl>
                       <Textarea
                         placeholder="본인의 능력을 최대한 언급해주세요."
                         {...fieldProps}
-                        value={resumeText}
                         onChange={e => {
                           fieldProps.onChange(e);
                           setResumeText(e.target.value);
