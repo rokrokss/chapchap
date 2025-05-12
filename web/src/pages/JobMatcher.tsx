@@ -32,13 +32,6 @@ const pdfFormSchema = z.object({
   }),
 });
 
-const textFormSchema = z.object({
-  resumeText: z
-    .string()
-    .min(20, { message: '20자 이상 적어주세요.' })
-    .max(1000, { message: '1000자 이하로 적어주세요.' }),
-});
-
 const JobMatcher = () => {
   const navigate = useNavigate();
   const [resumeUploaded, setResumeUploaded] = useState(false);
