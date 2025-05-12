@@ -68,7 +68,7 @@ async def update_agent_state(
     summary = [
         line.strip()[1:].strip().replace(" -> ", ", ").strip()
         for line in summary.strip().split("\n")
-        if line.strip()
+        if (line.strip() and line.startswith("- "))
     ]
     await agent.graph.aupdate_state(
         {"configurable": {"thread_id": session_id}},

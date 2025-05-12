@@ -4,6 +4,7 @@ import JobList from './pages/JobList';
 import JobMatcher from './pages/JobMatcher';
 import NoPage from './pages/NoPage';
 import { ThemeProvider } from '@/components/theme-provider';
+import JobMatcherText from './pages/JobMatcherText';
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
           <Route path="/" element={<Layout />}>
             <Route index element={<JobList />} />
             <Route path="match" element={<JobMatcher />} />
+            <Route path="match-text" element={<JobMatcherText />} />
             <Route path="*" element={<NoPage />} />
           </Route>
         </Routes>

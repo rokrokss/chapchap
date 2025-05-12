@@ -6,9 +6,11 @@ import {
   NavigationMenuList,
 } from '@/components/ui/navigation-menu';
 import { ModeToggle } from '@/components/mode-toggle';
+import useResumeStore from '@/store/useResumeStore';
 
 const Layout = () => {
   const location = useLocation();
+  const { pdfMode } = useResumeStore();
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -37,7 +39,7 @@ const Layout = () => {
                   }
                   asChild
                 >
-                  <Link to="/match">취업AI</Link>
+                  <Link to={pdfMode ? '/match' : '/match-text'}>취업AI</Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
             </NavigationMenuList>

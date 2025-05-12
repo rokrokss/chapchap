@@ -4,12 +4,11 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  fetchAnalyzeResumeStream,
   fetchMatchJob,
   fetchGenerateCoverLetter,
+  fetchAnalyzeResumeStreamByText,
 } from '@/services/resume';
 import { Loader2 } from 'lucide-react';
 import { useAnimatedText } from '@/components/animated-text';
@@ -24,13 +23,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { useNavigate } from 'react-router-dom';
-
-const pdfFormSchema = z.object({
-  resumePdf: z.custom<File>(file => file instanceof File && file.type === 'application/pdf', {
-    message: 'PDF 파일만 업로드 가능합니다.',
-  }),
-});
 
 const textFormSchema = z.object({
   resumeText: z
@@ -39,7 +33,7 @@ const textFormSchema = z.object({
     .max(1000, { message: '1000자 이하로 적어주세요.' }),
 });
 
-const JobMatcher = () => {
+const JobMatcherText = () => {
   const navigate = useNavigate();
   const [resumeUploaded, setResumeUploaded] = useState(false);
   const {
@@ -49,12 +43,14 @@ const JobMatcher = () => {
     selectedJobId,
     selectedJobName,
     pdfMode,
+    resumeText,
     setSummary,
     setMatchedJobs,
     setCoverLetter,
     setSelectedJobId,
     setSelectedJobName,
     setPdfMode,
+    setResumeText,
   } = useResumeStore();
 
   const [summaryLoading, setSummaryLoading] = useState(false);
@@ -66,15 +62,16 @@ const JobMatcher = () => {
   const animatedCoverLetter = useAnimatedText(coverLetter);
   const [accordianOpen, setAccordionOpen] = useState('');
 
-  const pdfForm = useForm<z.infer<typeof pdfFormSchema>>({
-    resolver: zodResolver(pdfFormSchema),
+  const textForm = useForm<z.infer<typeof textFormSchema>>({
+    resolver: zodResolver(textFormSchema),
     defaultValues: {
-      resumePdf: undefined,
+      resumeText: resumeText || '',
     },
   });
 
-  const getResumeSummaryPdf = async (values: z.infer<typeof pdfFormSchema>) => {
-    const reader = await fetchAnalyzeResumeStream(values.resumePdf);
+  const getResumeSummaryText = async (values: z.infer<typeof textFormSchema>) => {
+    const resume = values.resumeText;
+    const reader = await fetchAnalyzeResumeStreamByText(resume);
     const decoder = new TextDecoder('utf-8');
     if (!reader) return;
     while (true) {
@@ -107,9 +104,9 @@ const JobMatcher = () => {
     setSelectedJobName('');
   };
 
-  const onSubmitPdf = async (values: z.infer<typeof pdfFormSchema>) => {
+  const onSubmitText = async (values: z.infer<typeof textFormSchema>) => {
     resetStateForAnalyze();
-    await getResumeSummaryPdf(values);
+    await getResumeSummaryText(values);
     await getMatchedJobs();
   };
 
@@ -158,7 +155,7 @@ const JobMatcher = () => {
 
   const onClickModeChange = () => {
     setPdfMode(!pdfMode);
-    navigate('/match-text');
+    navigate('/match');
   };
 
   return (
@@ -177,29 +174,28 @@ const JobMatcher = () => {
             disabled={matchedJobsLoading}
             onClick={onClickModeChange}
           >
-            {matchedJobsLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              '텍스트로 분석하기'
-            )}
+            {matchedJobsLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'PDF로 분석하기'}
           </Button>
         </div>
-        <Form {...pdfForm}>
+        <Form {...textForm}>
           <form
-            onSubmit={pdfForm.handleSubmit(onSubmitPdf)}
+            onSubmit={textForm.handleSubmit(onSubmitText)}
             className="flex w-full items-center gap-1"
           >
             <FormField
-              control={pdfForm.control}
-              name="resumePdf"
-              render={({ field: { value, onChange, ...fieldProps } }) => (
+              control={textForm.control}
+              name="resumeText"
+              render={({ field: { ...fieldProps } }) => (
                 <FormItem className="w-full">
                   <FormControl>
-                    <Input
+                    <Textarea
+                      placeholder="본인의 능력을 최대한 언급해주세요."
                       {...fieldProps}
-                      type="file"
-                      accept="application/pdf"
-                      onChange={event => onChange(event.target.files && event.target.files[0])}
+                      value={fieldProps.value}
+                      onChange={e => {
+                        fieldProps.onChange(e);
+                        setResumeText(e.target.value);
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
@@ -302,4 +298,4 @@ const JobMatcher = () => {
   );
 };
 
-export default JobMatcher;
+export default JobMatcherText;
