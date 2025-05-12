@@ -36,6 +36,7 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "ml" in job_title
         or "데이터과학자" in job_title
         or "senior staff engineer, growth engineering" in job_title
+        or "llm" in job_title
     ):
         tags.append("AI")
     if "sre" in job_title or "reliability" in job_title:
@@ -45,6 +46,7 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "백엔드" in job_title
         or "backend" in job_title
         or "be " in job_title
+        or "be개발" in job_title
         or "플랫폼 개발" in job_title
         or "서버 개발" in job_title
         or "server engineer" in job_title
@@ -121,6 +123,7 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "asset manage" in job_title
         or "director product" in job_title
         or "지원 담당" in job_title
+        or "관리 전문" in job_title
     ):
         tags.append("PM")
 

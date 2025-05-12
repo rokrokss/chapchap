@@ -10,6 +10,7 @@ from google import genai
 from google.genai import types
 from datetime import datetime, date
 import psycopg
+import re
 
 # --- 기본 설정 ---
 load_dotenv(dotenv_path=".env.production")
@@ -86,7 +87,11 @@ def scrape_jobs(session: requests.Session) -> List[Dict[str, str]]:
         if not a_tag:
             continue
 
-        job_title = a_tag.find("h3", class_="c-boyXyq").get_text(strip=True)
+        job_title = re.sub(
+            r"[\x00-\x1F\x7F]",
+            "",
+            a_tag.find("h3", class_="c-boyXyq").get_text(strip=True),
+        )
         job_link = a_tag["href"]
         if (
             "engineer" not in job_title.lower()
