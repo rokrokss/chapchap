@@ -190,7 +190,7 @@ def main():
 
             cur.execute(
                 """
-                UPDATE job_info SET is_active = false WHERE updated_at < NOW() - INTERVAL '2 days'
+                UPDATE job_info SET is_active = false WHERE updated_at < NOW() - INTERVAL '1 days'
                 """
             )
             conn.commit()
