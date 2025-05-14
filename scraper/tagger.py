@@ -3,18 +3,10 @@ import logging
 from dotenv import load_dotenv
 from typing import List
 import psycopg
+from util import DB_CONFIG
 
 load_dotenv(dotenv_path=".env.production")
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
-
-DB_CONFIG = {
-    "dbname": os.getenv("DB_NAME", "postgres"),
-    "user": os.getenv("DB_USER", "postgres"),
-    "password": os.getenv("DB_PASSWORD", "postgres"),
-    "host": os.getenv("DB_HOST", "localhost"),
-    "port": os.getenv("DB_PORT", "54322"),
-    "options": f"-c search_path={os.getenv('DB_SCHEMA', 'chapchap')}",
-}
 
 
 def get_tag(job_title: str, company_name: str) -> List[str]:
@@ -53,6 +45,7 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "서버 소프트웨어" in job_title
         or "plus 채용연계형 인턴십" in job_title
         or "head of engineering" in job_title
+        or "platform engineer" in job_title
     ):
         tags.append("BE")
     if (
@@ -62,6 +55,7 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "도구개발팀 시니어 엔지니어" in job_title
         or "웹 개발" in job_title
         or "호텔 서비스 개발" in job_title
+        or "web engineer" in job_title
     ):
         tags.append("FE")
     if "security" in job_title or "보안 " in job_title or "red team" in job_title:
@@ -74,6 +68,7 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "system developer" in job_title
         or "systems developer" in job_title
         or "firmware" in job_title
+        or "industrial engineer" in job_title
     ):
         tags.append("SE")
     if "network engineer" in job_title:
