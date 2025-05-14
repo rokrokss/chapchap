@@ -56,6 +56,9 @@ def scrape_jobs(session: requests.Session) -> List[Dict[str, str]]:
                     if " - Coupang Play" in title:
                         title = title.split(" - Coupang Play")[0].strip()
                         affiliate_company_name = "쿠팡플레이"
+                    if " (Coupang Play)" in title:
+                        title = title.split(" (Coupang Play)")[0].strip()
+                        affiliate_company_name = "쿠팡플레이"
                     if " — Coupang Pay" in title:
                         title = title.split(" — Coupang Pay")[0].strip()
                         affiliate_company_name = "쿠팡페이"
