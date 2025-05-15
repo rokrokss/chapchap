@@ -21,7 +21,7 @@ const Layout = () => {
             <img src={pray} alt="찹찹" className="h-6 mt-1.5 pl-1" />
           </div>
         </Link>
-        <div className="flex justify-center w-full mr-2">
+        <div className="flex justify-center w-full mr-3">
           <NavigationMenu className="flex">
             <NavigationMenuList>
               <NavigationMenuItem>
