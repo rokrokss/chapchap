@@ -1,7 +1,7 @@
 # chapchap
 > https://chapchap.im
 
-![chapchap demo](doc/chapchap.gif)
+![chapchap demo](doc/chapchap00.gif)
 
 
 ## 주요 기능
