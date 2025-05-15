@@ -114,7 +114,7 @@ const JobList = () => {
             {tag.tag_name} ({tag.job_count})
           </Button>
         ))}
-        <Separator className="mt-1" />
+        {loading ? null : <Separator className="mt-1" />}
       </div>
       <Accordion
         type="single"
@@ -135,7 +135,7 @@ const JobList = () => {
             onClickTag={onClickTag}
           />
         ))}
-        {loading ? <div>loading...</div> : null}
+        {loading ? <div>로딩 중...</div> : null}
       </Accordion>
     </div>
   );
