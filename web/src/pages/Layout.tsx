@@ -18,7 +18,7 @@ const Layout = () => {
       <div className="flex justify-between py-1 w-full max-w-3xl mx-auto">
         <Link to="/">
           <div className="flex items-center justify-start ml-4 pl-3 w-16 cursor-pointer">
-            <img src={pray} alt="찹찹" className="h-6 mt-1.5 pl-1" />
+            <img src={pray} alt="찹찹" className="h-6 mt-2.5 pl-1" />
           </div>
         </Link>
         <div className="flex justify-center w-full mr-1">
