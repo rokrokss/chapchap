@@ -122,7 +122,15 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "관리 전문" in job_title
     ):
         tags.append("PM")
-
+    if (
+        "xr" in job_title
+        or "vr" in job_title
+        or "augmented reality" in job_title
+        or "virtual reality" in job_title
+        or "모션" in job_title
+        or "motion" in job_title
+    ):
+        tags.append("XR")
     return tags
 
 
@@ -144,6 +152,7 @@ def main():
             "DevOps",
             "게임 클라이언트",
             "PM",
+            "XR",
         ]
 
         with conn.cursor() as cur:
