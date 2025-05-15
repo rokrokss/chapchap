@@ -97,7 +97,7 @@ const JobList = () => {
             key={company.company_name}
             variant={selectedCompanies.includes(company.company_name) ? 'default' : 'outline'}
             size="ss"
-            className="mr-1.5 duration-0 mt-3"
+            className="mr-1.5 duration-0 mt-1 mb-2"
             onClick={e => onClickCompany(e, company.company_name)}
           >
             {company.company_name} ({company.job_count})
@@ -108,13 +108,13 @@ const JobList = () => {
             key={tag.tag_name}
             variant={selectedTags.includes(tag.tag_name) ? 'default' : 'outline'}
             size="ss"
-            className="mr-1.5 duration-0 mt-3"
+            className="mr-1.5 duration-0 mt-1 mb-2"
             onClick={e => onClickTag(e, tag.tag_name)}
           >
             {tag.tag_name} ({tag.job_count})
           </Button>
         ))}
-        <Separator className="mt-4" />
+        <Separator className="mt-1" />
       </div>
       <Accordion
         type="single"

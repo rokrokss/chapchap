@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/navigation-menu';
 import { ModeToggle } from '@/components/mode-toggle';
 import useResumeStore from '@/store/useResumeStore';
+import pray from '@/assets/pray.svg';
 
 const Layout = () => {
   const location = useLocation();
@@ -15,7 +16,12 @@ const Layout = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <div className="flex justify-between py-1 w-full max-w-3xl mx-auto">
-        <div className="flex justify-center w-full ml-15">
+        <Link to="/">
+          <div className="flex items-center justify-start ml-4 pl-3 w-16 cursor-pointer">
+            <img src={pray} alt="찹찹" className="h-6 mt-1.5 pl-1" />
+          </div>
+        </Link>
+        <div className="flex justify-center w-full mr-1">
           <NavigationMenu className="flex">
             <NavigationMenuList>
               <NavigationMenuItem>
