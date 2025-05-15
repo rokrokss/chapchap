@@ -11,6 +11,7 @@ from util import (
     DEFAULT_HEADERS,
     extract_structured_data_with_gemini,
 )
+import json
 
 # --- 기본 설정 ---
 load_dotenv(dotenv_path=".env.production")

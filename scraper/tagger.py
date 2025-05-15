@@ -68,6 +68,7 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "system developer" in job_title
         or "systems developer" in job_title
         or "firmware" in job_title
+        or "robotics" in job_title
         or "industrial engineer" in job_title
     ):
         tags.append("SE")
