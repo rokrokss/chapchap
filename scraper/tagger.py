@@ -14,7 +14,7 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
     job_title = job_title.lower()
 
     if company_name == "데브시스터즈" and "클라이언트" in job_title:
-        tags.append("게임 클라이언트")
+        tags.append("게임")
     if (
         "ai " in job_title
         or "machine learning" in job_title
@@ -150,7 +150,7 @@ def main():
             "DA",
             "DB",
             "DevOps",
-            "게임 클라이언트",
+            "게임",
             "PM",
             "XR",
         ]
