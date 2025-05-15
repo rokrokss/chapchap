@@ -120,6 +120,7 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "director product" in job_title
         or "지원 담당" in job_title
         or "관리 전문" in job_title
+        or "director, procurement" in job_title
     ):
         tags.append("PM")
     if (
