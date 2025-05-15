@@ -135,7 +135,7 @@ const JobList = () => {
             onClickTag={onClickTag}
           />
         ))}
-        {loading ? <div>로딩 중...</div> : null}
+        {companyCounts.length > 0 || tagCounts.length > 0 ? null : <div>로딩 중...</div>}
       </Accordion>
     </div>
   );
