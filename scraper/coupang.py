@@ -153,9 +153,11 @@ def main():
             affiliate_company_name=job["affiliate_company_name"],
             link=job["link"],
             job_title=job["title"],
-            uploaded_date=datetime.strptime(
-                job_detail["updated_date"], "%Y-%m-%d"
-            ).date(),
+            uploaded_date=(
+                datetime.strptime(job_detail["updated_date"], "%Y-%m-%d").date()
+                if job_detail["updated_date"]
+                else datetime.now().date()
+            ),
             **job_info_response.model_dump(),
         )
 
