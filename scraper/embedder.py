@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import psycopg
 from openai import OpenAI
 import numpy as np
-from typing import List, Dict
+from typing import List
 from collections import defaultdict
 from util import DB_CONFIG
 
@@ -22,9 +22,11 @@ def get_embeddings(texts: List[str]) -> List[List[float]]:
 
 def embed_and_store_sentences():
     query = """
-        SELECT job_id, type, sentence_index, sentence
-        FROM chapchap.job_qualification_sentences
-        ORDER BY job_id, type, sentence_index
+        SELECT jqs.job_id, jqs.type, jqs.sentence_index, jqs.sentence
+        FROM chapchap.job_qualification_sentences jqs
+        JOIN chapchap.job_info ji ON ji.id = jqs.job_id
+        WHERE ji.is_active = true
+        ORDER BY jqs.job_id, jqs.type, jqs.sentence_index;
     """
 
     job_sentences = defaultdict(list)
@@ -42,7 +44,6 @@ def embed_and_store_sentences():
 
         total_jobs = len(job_sentences)
         with conn.cursor() as cur:
-            cur.execute(f"SET search_path TO {os.getenv('DB_SCHEMA', 'chapchap')}")
             for i, (job_id, sentence_rows) in enumerate(job_sentences.items(), 1):
                 try:
                     logging.info(f"▶️ ({i}/{total_jobs}) {job_id} 임베딩 시작")
@@ -55,7 +56,7 @@ def embed_and_store_sentences():
                         row = sentence_rows[i]
                         cur.execute(
                             """
-                            UPDATE job_qualification_sentences SET
+                            UPDATE chapchap.job_qualification_sentences SET
                                 embedding = %s
                             WHERE job_id = %s AND type = %s AND sentence_index = %s
                             """,
@@ -63,14 +64,15 @@ def embed_and_store_sentences():
                         )
 
                     cur.execute(
-                        "SELECT job_id FROM job_embeddings WHERE job_id = %s", (job_id,)
+                        "SELECT job_id FROM chapchap.job_embeddings WHERE job_id = %s",
+                        (job_id,),
                     )
                     existing_job_embedding = cur.fetchone()
 
                     if existing_job_embedding:
                         cur.execute(
                             """
-                            UPDATE job_embeddings SET
+                            UPDATE chapchap.job_embeddings SET
                                 embedding = %s
                             WHERE job_id = %s
                             """,
@@ -79,7 +81,7 @@ def embed_and_store_sentences():
                     else:
                         cur.execute(
                             """
-                            INSERT INTO job_embeddings (job_id, embedding)
+                            INSERT INTO chapchap.job_embeddings (job_id, embedding)
                             VALUES (%s, %s)
                             """,
                             (job_id, avg_embedding),

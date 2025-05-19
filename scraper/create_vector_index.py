@@ -22,7 +22,7 @@ def create_vector_index():
             cur.execute(
                 "CREATE INDEX idx_job_embeddings_embedding ON job_embeddings USING hnsw (embedding vector_cosine_ops);"
             )
-            conn.commit()
+        conn.commit()
 
 
 if __name__ == "__main__":
