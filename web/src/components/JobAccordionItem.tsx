@@ -8,7 +8,6 @@ type Props = {
   index: number;
   selectedCompanies: string[];
   selectedTags: string[];
-  updatedAt: Date;
   onClickAccordion: (id: string) => void;
   onClickCompany: (e: React.MouseEvent<HTMLButtonElement>, companyName: string) => void;
   onClickTag: (e: React.MouseEvent<HTMLButtonElement>, tag: string) => void;
@@ -19,7 +18,6 @@ const JobAccordionItem = ({
   index,
   selectedCompanies,
   selectedTags,
-  updatedAt,
   onClickAccordion,
   onClickCompany,
   onClickTag,
@@ -65,9 +63,7 @@ const JobAccordionItem = ({
               </Button>
             ))}
           </div>
-          <div className="text-sm text-right whitespace-nowrap">
-            {updatedAt.toLocaleDateString()}
-          </div>
+          <div className="text-sm text-right whitespace-nowrap">{job.uploaded_date}</div>
         </div>
       </div>
       <AccordionContent>
