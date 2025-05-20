@@ -284,6 +284,7 @@ const JobMatcher = () => {
                     onClickAccordion={onClickAccordion}
                     onClickCompany={onClickTag}
                     onClickTag={onClickTag}
+                    updatedAt={new Date(job.updated_at)}
                   />
                 ))}
                 {matchedJobsLoading ? <Loader2 className="mt-5 ml-4 w-4 h-4 animate-spin" /> : null}
