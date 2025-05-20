@@ -134,7 +134,7 @@ const JobList = () => {
             onClickAccordion={onClickAccordion}
             onClickCompany={onClickCompany}
             onClickTag={onClickTag}
-            updatedAt={new Date(job.updated_at)}
+            updatedAt={new Date(job.created_at)}
           />
         ))}
         {companyCounts.length > 0 || tagCounts.length > 0 ? null : <div>로딩 중...</div>}
