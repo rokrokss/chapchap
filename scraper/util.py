@@ -1,12 +1,13 @@
 import os
 import logging
 from dotenv import load_dotenv
-from typing import List, Dict, Optional, Union
+from typing import List, Optional, Union
 from pydantic import BaseModel
 from google import genai
 from google.genai import types
 from datetime import date
 import psycopg
+import time
 
 load_dotenv(dotenv_path=".env.production")
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
@@ -106,16 +107,29 @@ def extract_structured_data_with_gemini(
 - JSON 객체 외에 다른 부가적인 설명, 인사말, 코드 블록 마커(```json ... ```) 등은 절대 포함하지 마세요. 오직 순수한 JSON 객체만 출력해야 합니다.
 """
 
-        response = client.models.generate_content(
-            model=model_type,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                temperature=0.2,
-                response_schema=JobInfoResponse,
-            ),
-        )
-        return response.parsed
+        max_retries = 3
+        retry_count = 0
+
+        while retry_count < max_retries:
+            try:
+                response = client.models.generate_content(
+                    model=model_type,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        temperature=0.2,
+                        response_schema=JobInfoResponse,
+                    ),
+                )
+                return response.parsed
+            except Exception as e:
+                retry_count += 1
+                if retry_count == max_retries:
+                    raise e
+                logging.warning(
+                    f"Gemini API 호출 {retry_count}번째 재시도 중... 에러: {e}"
+                )
+                time.sleep(1)
 
     except Exception as e:
         logging.error(f"Gemini 호출 실패: {e}")

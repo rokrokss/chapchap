@@ -1,4 +1,3 @@
-import os
 import logging
 from dotenv import load_dotenv
 import psycopg
@@ -7,6 +6,7 @@ import numpy as np
 from typing import List
 from collections import defaultdict
 from util import DB_CONFIG
+import time
 
 load_dotenv(dotenv_path=".env.production")
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
@@ -16,8 +16,24 @@ client = OpenAI()
 
 def get_embeddings(texts: List[str]) -> List[List[float]]:
     logging.info(f"임베딩 요청 ({len(texts)} 문장)")
-    response = client.embeddings.create(input=texts, model="text-embedding-3-small")
-    return [item.embedding for item in response.data]
+
+    max_retries = 3
+    retry_count = 0
+
+    while retry_count < max_retries:
+        try:
+            response = client.embeddings.create(
+                input=texts, model="text-embedding-3-small"
+            )
+            return [item.embedding for item in response.data]
+        except Exception as e:
+            retry_count += 1
+            if retry_count == max_retries:
+                raise e
+            logging.warning(
+                f"Embedding API 호출 {retry_count}번째 재시도 중... 에러: {e}"
+            )
+            time.sleep(1)
 
 
 def embed_and_store_sentences():
