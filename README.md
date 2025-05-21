@@ -3,7 +3,7 @@
 
 자세한 내용은 [이 블로그 글](https://rokrokss.com/post/2025/05/13/개발자-채용공고-추천-서비스-찹찹-chapchap.html)에서 확인할 수 있습니다.
 
-![chapchap demo](doc/chapchap00.gif)
+![chapchap demo](doc/chapchap00_looped.gif)
 
 
 ## 주요 기능
