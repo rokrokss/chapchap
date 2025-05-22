@@ -58,7 +58,12 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "web engineer" in job_title
     ):
         tags.append("FE")
-    if "security" in job_title or "보안 " in job_title or "red team" in job_title:
+    if (
+        "security" in job_title
+        or "보안 " in job_title
+        or "red team" in job_title
+        or "soar" in job_title
+    ):
         tags.append("보안")
     if (
         "systems engineer" in job_title
