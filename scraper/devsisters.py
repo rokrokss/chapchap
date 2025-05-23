@@ -64,7 +64,7 @@ def scrape_job_detail(session: requests.Session, url: str) -> str:
     """상세 채용 공고 내용을 스크래핑합니다."""
     res = session.get(url, headers=DEFAULT_HEADERS)
     soup = BeautifulSoup(res.content, "html.parser")
-    detail_wrap = soup.find("div", class_="dAecYk")
+    detail_wrap = soup.find("div", class_="detail")
 
     return (
         detail_wrap.get_text(separator="\n", strip=True)
