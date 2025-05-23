@@ -46,6 +46,7 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "plus 채용연계형 인턴십" in job_title
         or "head of engineering" in job_title
         or "platform engineer" in job_title
+        or "서버 엔지니어" in job_title
     ):
         tags.append("BE")
     if (
