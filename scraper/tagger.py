@@ -88,7 +88,7 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "data warehouse" in job_title
         or "data platform" in job_title
         or "software engineer (data)" in job_title
-        or "software engineer (analytics engineering)" in job_title
+        or "analytics engineer" in job_title
     ):
         tags.append("DE")
     if (

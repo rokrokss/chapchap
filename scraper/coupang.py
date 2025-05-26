@@ -95,6 +95,7 @@ def scrape_jobs(session: requests.Session) -> List[Dict[str, str]]:
                         and not "Product Management" in title
                         and not "Product Design" in title
                         and not "Marketing" in title
+                        and affiliate_company_name != "쿠팡풀필먼트서비스"
                     ):
                         jobs.append(
                             {
