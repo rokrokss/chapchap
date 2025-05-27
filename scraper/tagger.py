@@ -29,6 +29,7 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "데이터과학자" in job_title
         or "senior staff engineer, growth engineering" in job_title
         or "llm" in job_title
+        or "hyperclova" in job_title
     ):
         tags.append("AI")
     if "sre" in job_title or "reliability" in job_title:
@@ -47,6 +48,7 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "head of engineering" in job_title
         or "platform engineer" in job_title
         or "서버 엔지니어" in job_title
+        or "사내정보시스템 개발" in job_title
     ):
         tags.append("BE")
     if (
@@ -57,6 +59,7 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "웹 개발" in job_title
         or "호텔 서비스 개발" in job_title
         or "web engineer" in job_title
+        or "naver 개인화 서비스 개발" in job_title
     ):
         tags.append("FE")
     if (
@@ -64,6 +67,7 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "보안 " in job_title
         or "red team" in job_title
         or "soar" in job_title
+        or "개인정보보호 관리" in job_title
     ):
         tags.append("보안")
     if (
@@ -76,9 +80,14 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "firmware" in job_title
         or "robotics" in job_title
         or "industrial engineer" in job_title
+        or "object storage 서비스 개발" in job_title
     ):
         tags.append("SE")
-    if "network engineer" in job_title:
+    if (
+        "network engineer" in job_title
+        or "네트워크 엔지니어" in job_title
+        or "인프라 엔지니어(network" in job_title
+    ):
         tags.append("NE")
     if (
         "data engineer" in job_title
@@ -108,7 +117,12 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         tags.append("QA")
     if "데이터분석" in job_title or "data analyst" in job_title:
         tags.append("DA")
-    if "db " in job_title or "데이터베이스" in job_title or "hbase " in job_title:
+    if (
+        "db " in job_title
+        or "데이터베이스" in job_title
+        or "hbase " in job_title
+        or "dba" in job_title
+    ):
         tags.append("DB")
     if (
         "kubernetes" in job_title
@@ -116,6 +130,9 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "cloud " in job_title
         or "engineer, infra" in job_title
         or "인프라운영" in job_title
+        or "cloud iaas" in job_title
+        or "클라우드 플랫폼" in job_title
+        or "cloud & infrastructure" in job_title
     ):
         tags.append("DevOps")
     if (
