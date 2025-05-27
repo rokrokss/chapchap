@@ -1,4 +1,5 @@
 all:
+	poetry run python clear_chat_history.py
 	poetry run python drop_vector_index.py
 	poetry run python naver.py
 	poetry run python kakao.py
