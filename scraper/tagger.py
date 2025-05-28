@@ -53,7 +53,7 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         tags.append("BE")
     if (
         "front-end" in job_title
-        or "프론트엔드" in job_title
+        or "프론트" in job_title
         or "frontend" in job_title
         or "도구개발팀 시니어 엔지니어" in job_title
         or "웹 개발" in job_title
@@ -133,6 +133,7 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "cloud iaas" in job_title
         or "클라우드 플랫폼" in job_title
         or "cloud & infrastructure" in job_title
+        or "cloud storage" in job_title
     ):
         tags.append("DevOps")
     if (
