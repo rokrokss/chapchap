@@ -72,16 +72,16 @@ const JobAccordionItem = ({
                 size="xs"
                 className="mr-1 duration-0"
               >
-                최근 1일
+                1일
               </Button>
             )}
-            {job.uploaded_in_a_week && (
+            {(!job.uploaded_in_a_day || filterByRecentWeek) && job.uploaded_in_a_week && (
               <Button
                 variant={filterByRecentWeek ? 'default' : 'outline'}
                 size="xs"
                 className="mr-1 duration-0"
               >
-                최근 일주일
+                일주일
               </Button>
             )}
           </div>
