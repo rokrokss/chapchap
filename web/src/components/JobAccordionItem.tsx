@@ -11,6 +11,8 @@ type Props = {
   onClickAccordion: (id: string) => void;
   onClickCompany: (e: React.MouseEvent<HTMLButtonElement>, companyName: string) => void;
   onClickTag: (e: React.MouseEvent<HTMLButtonElement>, tag: string) => void;
+  filterByRecentWeek: boolean;
+  filterByRecentDay: boolean;
 };
 
 const JobAccordionItem = ({
@@ -21,6 +23,8 @@ const JobAccordionItem = ({
   onClickAccordion,
   onClickCompany,
   onClickTag,
+  filterByRecentWeek,
+  filterByRecentDay,
 }: Props) => {
   return (
     <AccordionItem key={job.id} value={job.id}>
@@ -62,6 +66,24 @@ const JobAccordionItem = ({
                 {tag}
               </Button>
             ))}
+            {job.uploaded_in_a_day && (
+              <Button
+                variant={filterByRecentDay ? 'default' : 'outline'}
+                size="xs"
+                className="mr-1 duration-0"
+              >
+                최근 1일
+              </Button>
+            )}
+            {job.uploaded_in_a_week && (
+              <Button
+                variant={filterByRecentWeek ? 'default' : 'outline'}
+                size="xs"
+                className="mr-1 duration-0"
+              >
+                최근 일주일
+              </Button>
+            )}
           </div>
           <div className="text-sm text-right whitespace-nowrap">{job.uploaded_date}</div>
         </div>

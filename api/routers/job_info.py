@@ -2,6 +2,7 @@ from fastapi import APIRouter, Request
 from typing import List
 from psycopg.rows import dict_row
 from collections import defaultdict
+from datetime import date, timedelta
 
 router = APIRouter()
 
@@ -45,12 +46,23 @@ async def get_all_active_job_info(
     for row in sentence_rows:
         qualifications_map[row["job_id"]][row["type"]].append(row["sentence"])
 
+    today = date.today()
+    one_week_ago = today - timedelta(days=7)
+
     results = []
     for job in job_rows:
         job_dict = dict(job)
         job_id = job_dict["id"]
         job_dict["qualifications"] = qualifications_map[job_id]["required"]
         job_dict["preferred_qualifications"] = qualifications_map[job_id]["preferred"]
+        uploaded_date = job_dict.get("uploaded_date")
+        job_dict["uploaded_in_a_week"] = (
+            uploaded_date is not None and uploaded_date >= one_week_ago
+        )
+        job_dict["uploaded_in_a_day"] = (
+            uploaded_date is not None and uploaded_date >= today - timedelta(days=1)
+        )
+
         results.append(job_dict)
 
     return results

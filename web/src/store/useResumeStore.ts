@@ -19,6 +19,8 @@ export type Job = {
   tags: string[];
   cosine_similarity: number;
   reason: string;
+  uploaded_in_a_week: boolean;
+  uploaded_in_a_day: boolean;
 };
 
 interface ResumeStoreType {

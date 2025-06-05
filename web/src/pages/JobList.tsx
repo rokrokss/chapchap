@@ -17,10 +17,18 @@ const JobList = () => {
   const [companyCounts, setCompanyCounts] = useState<{ company_name: string; job_count: number }[]>(
     []
   );
+  const [recentWeekCount, setRecentWeekCount] = useState(0);
+  const [filterByRecentWeek, setFilterByRecentWeek] = useState(false);
+  const [recentDayCount, setRecentDayCount] = useState(0);
+  const [filterByRecentDay, setFilterByRecentDay] = useState(false);
 
   const loadAllActiveJobs = async () => {
     setLoading(true);
     const newJobs = await fetchAllActiveJobs();
+    const recent = newJobs.filter((job: Job) => job.uploaded_in_a_week).length;
+    setRecentWeekCount(recent);
+    const recentDay = newJobs.filter((job: Job) => job.uploaded_in_a_day).length;
+    setRecentDayCount(recentDay);
     setJobs(newJobs);
     await filterJobs(newJobs, selectedCompanies, selectedTags);
     setLoading(false);
@@ -77,22 +85,66 @@ const JobList = () => {
   const filterJobs = async (
     allJobs: Job[],
     selectedCompanies: string[],
-    selectedTags: string[]
+    selectedTags: string[],
+    filterRecentWeek: boolean = filterByRecentWeek,
+    filterRecentDay: boolean = filterByRecentDay
   ) => {
-    const newFilteredJobs = allJobs.filter(
-      job =>
-        (selectedCompanies.length === 0 ||
-          selectedCompanies.includes(job.company_name) ||
-          selectedCompanies.includes(job.affiliate_company_name)) &&
-        (selectedTags.length === 0 || job.tags.some(tag => selectedTags.includes(tag)))
-    );
+    const newFilteredJobs = allJobs.filter(job => {
+      const matchesCompany =
+        selectedCompanies.length === 0 ||
+        selectedCompanies.includes(job.company_name) ||
+        selectedCompanies.includes(job.affiliate_company_name);
+
+      const matchesTag =
+        selectedTags.length === 0 || job.tags.some(tag => selectedTags.includes(tag));
+
+      const matchesRecentWeek = !filterRecentWeek || job.uploaded_in_a_week;
+
+      const matchesRecentDay = !filterRecentDay || job.uploaded_in_a_day;
+
+      return matchesCompany && matchesTag && matchesRecentWeek && matchesRecentDay;
+    });
     console.log(newFilteredJobs);
     setFilteredJobs(newFilteredJobs);
+  };
+
+  const onClickRecent = () => {
+    const newFilter = !filterByRecentWeek;
+    setFilterByRecentWeek(newFilter);
+    filterJobs(jobs, selectedCompanies, selectedTags, newFilter, filterByRecentDay);
+    setAccordionOpen('');
+  };
+
+  const onClickRecentDay = () => {
+    const newFilter = !filterByRecentDay;
+    setFilterByRecentDay(newFilter);
+    filterJobs(jobs, selectedCompanies, selectedTags, filterByRecentWeek, newFilter);
+    setAccordionOpen('');
   };
 
   return (
     <div>
       <div className="w-full max-w-3xl mx-auto px-6">
+        {recentDayCount > 0 && (
+          <Button
+            variant={filterByRecentDay ? 'defaultColor' : 'outlineColor'}
+            size="ss"
+            className="mr-1.5 duration-0 mt-1 mb-2"
+            onClick={onClickRecentDay}
+          >
+            최근 1일 ({recentDayCount})
+          </Button>
+        )}
+        {recentWeekCount > 0 && (
+          <Button
+            variant={filterByRecentWeek ? 'default' : 'outline'}
+            size="ss"
+            className="mr-1.5 duration-0 mt-1 mb-2"
+            onClick={onClickRecent}
+          >
+            최근 일주일 ({recentWeekCount})
+          </Button>
+        )}
         {companyCounts.map(company => (
           <Button
             key={company.company_name}
@@ -134,6 +186,8 @@ const JobList = () => {
             onClickAccordion={onClickAccordion}
             onClickCompany={onClickCompany}
             onClickTag={onClickTag}
+            filterByRecentWeek={filterByRecentWeek}
+            filterByRecentDay={filterByRecentDay}
           />
         ))}
         {companyCounts.length > 0 || tagCounts.length > 0 ? null : <div>로딩 중...</div>}
