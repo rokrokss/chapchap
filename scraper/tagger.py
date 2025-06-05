@@ -124,6 +124,7 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "flutter" in job_title
         or "mobile" in job_title
         or "android" in job_title
+        or "슈퍼앱" in job_title
     ):
         tags.append("앱")
     if (
@@ -179,6 +180,7 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "virtual reality" in job_title
         or "모션" in job_title
         or "motion" in job_title
+        or "graphics" in job_title
     ):
         tags.append("XR")
     return tags

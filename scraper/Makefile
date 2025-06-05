@@ -10,6 +10,7 @@ all:
 	poetry run python hpcnt.py
 	poetry run python devsisters.py
 	poetry run python flipster.py
+	poetry run python hyperithm.py
 	poetry run python tagger.py
 	poetry run python embedder.py
 	poetry run python create_vector_index.py
