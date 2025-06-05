@@ -16,6 +16,13 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
     if company_name == "데브시스터즈" and "클라이언트" in job_title:
         tags.append("게임")
     if (
+        "cef" in job_title
+        or "defi" in job_title
+        or "blockchain" in job_title
+        or "블록체인" in job_title
+    ):
+        tags.append("블록체인")
+    if (
         "ai " in job_title
         or "machine learning" in job_title
         or "deep learning" in job_title
@@ -30,6 +37,10 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "senior staff engineer, growth engineering" in job_title
         or "llm" in job_title
         or "hyperclova" in job_title
+        or "ai엔지니어" in job_title
+        or (
+            company_name == "하이퍼리즘" and "소프트웨어 엔지니어 (인턴십)" in job_title
+        )
     ):
         tags.append("AI")
     if "sre" in job_title or "reliability" in job_title:
@@ -38,6 +49,7 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         "back-end" in job_title
         or "백엔드" in job_title
         or "backend" in job_title
+        or "back end" in job_title
         or "be " in job_title
         or "be개발" in job_title
         or "플랫폼 개발" in job_title
@@ -49,12 +61,14 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "platform engineer" in job_title
         or "서버 엔지니어" in job_title
         or "사내정보시스템 개발" in job_title
+        or "금융 플랫폼" in job_title
     ):
         tags.append("BE")
     if (
         "front-end" in job_title
         or "프론트" in job_title
         or "frontend" in job_title
+        or "front end" in job_title
         or "도구개발팀 시니어 엔지니어" in job_title
         or "웹 개발" in job_title
         or "호텔 서비스 개발" in job_title
@@ -81,12 +95,15 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "robotics" in job_title
         or "industrial engineer" in job_title
         or "object storage 서비스 개발" in job_title
+        or "facility design" in job_title
+        or "시스템 소프트웨어" in job_title
     ):
         tags.append("SE")
     if (
         "network engineer" in job_title
         or "네트워크 엔지니어" in job_title
         or "인프라 엔지니어(network" in job_title
+        or "전기통신" in job_title
     ):
         tags.append("NE")
     if (
@@ -134,6 +151,7 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "클라우드 플랫폼" in job_title
         or "cloud & infrastructure" in job_title
         or "cloud storage" in job_title
+        or "데브옵스" in job_title
     ):
         tags.append("DevOps")
     if (
@@ -150,6 +168,8 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "relation manager" in job_title
         or "it기획" in job_title
         or "acquisition" in job_title
+        or "product compliance" in job_title
+        or "협력 담당자" in job_title
     ):
         tags.append("PM")
     if (
@@ -183,6 +203,7 @@ def main():
             "게임",
             "PM",
             "XR",
+            "블록체인",
         ]
 
         with conn.cursor() as cur:
