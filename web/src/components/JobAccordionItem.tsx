@@ -13,6 +13,8 @@ type Props = {
   onClickTag: (e: React.MouseEvent<HTMLButtonElement>, tag: string) => void;
   filterByRecentWeek: boolean;
   filterByRecentDay: boolean;
+  onClickRecentWeek: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  onClickRecentDay: (e: React.MouseEvent<HTMLButtonElement>) => void;
 };
 
 const JobAccordionItem = ({
@@ -25,6 +27,8 @@ const JobAccordionItem = ({
   onClickTag,
   filterByRecentWeek,
   filterByRecentDay,
+  onClickRecentWeek,
+  onClickRecentDay,
 }: Props) => {
   return (
     <AccordionItem key={job.id} value={job.id}>
@@ -71,6 +75,7 @@ const JobAccordionItem = ({
                 variant={filterByRecentDay ? 'default' : 'outline'}
                 size="xs"
                 className="mr-1 duration-0"
+                onClick={e => onClickRecentDay(e)}
               >
                 1일
               </Button>
@@ -80,6 +85,7 @@ const JobAccordionItem = ({
                 variant={filterByRecentWeek ? 'default' : 'outline'}
                 size="xs"
                 className="mr-1 duration-0"
+                onClick={e => onClickRecentWeek(e)}
               >
                 일주일
               </Button>

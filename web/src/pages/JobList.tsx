@@ -108,14 +108,16 @@ const JobList = () => {
     setFilteredJobs(newFilteredJobs);
   };
 
-  const onClickRecent = () => {
+  const onClickRecent = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
     const newFilter = !filterByRecentWeek;
     setFilterByRecentWeek(newFilter);
     filterJobs(jobs, selectedCompanies, selectedTags, newFilter, filterByRecentDay);
     setAccordionOpen('');
   };
 
-  const onClickRecentDay = () => {
+  const onClickRecentDay = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
     const newFilter = !filterByRecentDay;
     setFilterByRecentDay(newFilter);
     filterJobs(jobs, selectedCompanies, selectedTags, filterByRecentWeek, newFilter);
@@ -130,7 +132,7 @@ const JobList = () => {
             variant={filterByRecentDay ? 'defaultColor' : 'outlineColor'}
             size="ss"
             className="mr-1.5 duration-0 mt-1 mb-2"
-            onClick={onClickRecentDay}
+            onClick={e => onClickRecentDay(e)}
           >
             최근 1일 ({recentDayCount})
           </Button>
@@ -140,7 +142,7 @@ const JobList = () => {
             variant={filterByRecentWeek ? 'default' : 'outline'}
             size="ss"
             className="mr-1.5 duration-0 mt-1 mb-2"
-            onClick={onClickRecent}
+            onClick={e => onClickRecent(e)}
           >
             최근 일주일 ({recentWeekCount})
           </Button>
@@ -188,6 +190,8 @@ const JobList = () => {
             onClickTag={onClickTag}
             filterByRecentWeek={filterByRecentWeek}
             filterByRecentDay={filterByRecentDay}
+            onClickRecentWeek={onClickRecent}
+            onClickRecentDay={onClickRecentDay}
           />
         ))}
         {companyCounts.length > 0 || tagCounts.length > 0 ? null : <div>로딩 중...</div>}

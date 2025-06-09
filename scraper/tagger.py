@@ -74,6 +74,7 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "호텔 서비스 개발" in job_title
         or "web engineer" in job_title
         or "naver 개인화 서비스 개발" in job_title
+        or "fe 개발" in job_title
     ):
         tags.append("FE")
     if (
@@ -115,6 +116,7 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "data platform" in job_title
         or "software engineer (data)" in job_title
         or "analytics engineer" in job_title
+        or "분산 시스템" in job_title
     ):
         tags.append("DE")
     if (

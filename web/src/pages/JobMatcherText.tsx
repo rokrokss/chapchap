@@ -159,6 +159,14 @@ const JobMatcherText = () => {
     navigate('/match');
   };
 
+  const onClickRecentWeek = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+  };
+
+  const onClickRecentDay = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+  };
+
   return (
     <div className="w-full max-w-3xl mx-auto px-6">
       <div className="w-full max-w-3xl mx-auto">
@@ -289,6 +297,8 @@ const JobMatcherText = () => {
                     onClickTag={onClickTag}
                     filterByRecentWeek={false}
                     filterByRecentDay={false}
+                    onClickRecentWeek={onClickRecentWeek}
+                    onClickRecentDay={onClickRecentDay}
                   />
                 ))}
                 {matchedJobsLoading ? <Loader2 className="mt-5 ml-4 w-4 h-4 animate-spin" /> : null}
