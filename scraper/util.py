@@ -156,6 +156,17 @@ def save_job_info(
         print(job_info.model_dump_json(indent=2))
         return
 
+    if (
+        job_info.team_info == "해당 내용 없음"
+        and len(job_info.responsibilities) == 1
+        and job_info.responsibilities[0] == "해당 내용 없음"
+        and len(job_info.qualifications) == 1
+        and job_info.qualifications[0] == "해당 내용 없음"
+        and len(job_info.preferred_qualifications) == 1
+        and job_info.preferred_qualifications[0] == "해당 내용 없음"
+    ):
+        return
+
     with psycopg.connect(**DB_CONFIG) as conn:
         with conn.cursor() as cur:
             cur.execute(f"SET search_path TO {os.getenv('DB_SCHEMA', 'chapchap')}")

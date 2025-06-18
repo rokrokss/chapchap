@@ -24,9 +24,15 @@ JOB_BASE_URL = "https://hyperithm.career.greetinghr.com"
 # --- 스크래핑 관련 함수 ---
 def scrape_jobs(session: requests.Session) -> List[Dict[str, str]]:
     """채용 공고 리스트를 스크래핑합니다."""
-    target_url = f"{JOB_BASE_URL}/_next/data/LdCcvAFJsqZLYrC-QWRg8/ko/positions.json?locale=ko&page=positions"
+    target_url = f"{JOB_BASE_URL}/ko/positions"
     res = session.get(target_url, headers=DEFAULT_HEADERS)
-    data = res.json()["pageProps"]["dehydratedState"]["queries"]
+    res.encoding = "utf-8"
+    soup = BeautifulSoup(res.text, "html.parser", from_encoding="utf-8")
+
+    json_data = soup.find_all("script", type="application/json", id="__NEXT_DATA__")
+    data = json.loads(json_data[0].string)["props"]["pageProps"]["dehydratedState"][
+        "queries"
+    ]
 
     jobs = []
 
