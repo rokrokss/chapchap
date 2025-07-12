@@ -55,6 +55,7 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "be개발" in job_title
         or "플랫폼 개발" in job_title
         or "서버 개발" in job_title
+        or "서버개발" in job_title
         or "server engineer" in job_title
         or "서버 소프트웨어" in job_title
         or "plus 채용연계형 인턴십" in job_title
@@ -63,6 +64,7 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "서버 엔지니어" in job_title
         or "사내정보시스템 개발" in job_title
         or "금융 플랫폼" in job_title
+        or "api gateway" in job_title
         or ("staff software engineer" in job_title and company_name == "쿠팡")
     ):
         tags.append("BE")
@@ -78,6 +80,7 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "naver 개인화 서비스 개발" in job_title
         or "fe 개발" in job_title
         or "web engineer" in job_title
+        or "web app" in job_title
     ):
         tags.append("FE")
     if (
@@ -98,6 +101,7 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "systems developer" in job_title
         or "firmware" in job_title
         or "robotics" in job_title
+        or "robot os" in job_title
         or "industrial engineer" in job_title
         or "object storage 서비스 개발" in job_title
         or "facility design" in job_title
@@ -119,10 +123,12 @@ def get_tag(job_title: str, company_name: str) -> List[str]:
         or "데이터엔지니어" in job_title
         or "데이터 엔지니어" in job_title
         or "data warehouse" in job_title
+        or "data pipeline" in job_title
         or "data platform" in job_title
         or "software engineer (data)" in job_title
         or "analytics engineer" in job_title
         or "분산 시스템" in job_title
+        or "데이터 서빙" in job_title
     ):
         tags.append("DE")
     if (

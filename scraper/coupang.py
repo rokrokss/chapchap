@@ -107,7 +107,8 @@ def scrape_jobs(session: requests.Session) -> List[Dict[str, str]]:
 
             page += 1
 
-    return jobs
+    unique_jobs = {job["link"]: job for job in jobs}
+    return list(unique_jobs.values())
 
 
 def scrape_job_detail(session: requests.Session, url: str) -> str:
